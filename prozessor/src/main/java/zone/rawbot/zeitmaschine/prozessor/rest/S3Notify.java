@@ -6,6 +6,7 @@ import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.xmlpull.v1.XmlPullParserException;
@@ -20,8 +21,17 @@ import java.security.NoSuchAlgorithmException;
 @RestController
 public class S3Notify {
 
+    @PutMapping("api/webhook")
+    public ResponseEntity create(@RequestBody String body) {
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("api/webhook")
-    public ResponseEntity crawl(@RequestBody String body) {
+    public ResponseEntity update(@RequestBody String body) {
+        return ResponseEntity.ok().build();
+    }
+
+    private void getImages() {
         try {
             /* play.minio.io for test and development. */
             MinioClient minioClient = new MinioClient("http://localhost:9000", "test",
@@ -42,7 +52,6 @@ public class S3Notify {
         } catch (MinioException | NoSuchAlgorithmException | IOException | InvalidKeyException | XmlPullParserException e) {
             System.out.println("Error occurred: " + e);
         }
-        return ResponseEntity.ok().build();
     }
 
 }
