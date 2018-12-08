@@ -9,14 +9,15 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>prozessor</artifactId>
+  <artifactId>zweitmaschine-prozessor</artifactId>
   <packaging>jar</packaging>
 
-  <name>prozessor</name>
+  <name>zeitmaschine: prozessor</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <metadata-extractor.version>2.11.0</metadata-extractor.version>
   </properties>
 
   <dependencies>
@@ -28,6 +29,15 @@
     <dependency>
       <groupId>io.minio</groupId>
       <artifactId>minio</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.jayway.jsonpath</groupId>
+      <artifactId>json-path</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.drewnoakes</groupId>
+      <artifactId>metadata-extractor</artifactId>
+      <version>${metadata-extractor.version}</version>
     </dependency>
 
     <!-- Test dependencies -->
