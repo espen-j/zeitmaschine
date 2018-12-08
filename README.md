@@ -45,7 +45,7 @@ docker restart $ZM_DOCKER_NAME
 
 ```
 mc mb $ZM_NAME/media # create bucket media
-mc events add $ZM_NAME/media arn:minio:sqs::1:webhook # enable webhook for bucket, see options for suffix and prefix an methods!
+mc events add $ZM_NAME/media arn:minio:sqs::1:webhook --events put,delete --suffix (.jpg|.JPG|.jpeg|.JPEG) # enable webhook for bucket, see options for suffix and prefix an methods!
 mc admin config set $ZM_NAME < $ZM_CONFIG_DIR/config.json # reload config (needs restart)
 docker restart $ZM_DOCKER_NAME
 docker logs $ZM_DOCKER_NAME
