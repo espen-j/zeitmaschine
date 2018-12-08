@@ -24,6 +24,7 @@
 
   <modules>
     <module>prozessor</module>
+    <module>frontend</module>
   </modules>
 
   <dependencyManagement>
