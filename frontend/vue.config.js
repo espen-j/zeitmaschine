@@ -12,5 +12,14 @@ module.exports = {
     },
     // Change build paths to make them Maven compatible
     // see https://cli.vuejs.org/config/
-    outputDir: __dirname + '/target/dist'
+    outputDir: __dirname + '/target/dist',
+    devServer: {
+        port: 8081,
+        proxy: {
+            "/image/*": {
+                target: "http://localhost:8080",
+                secure: false
+            }
+        }
+    }
 }
