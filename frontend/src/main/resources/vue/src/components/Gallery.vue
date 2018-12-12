@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-for="image in images">
-      <img :src="image.thumbnail">
+      <img :src="image.thumbnail" width="120">
     </div>
   </div>
 </template>
@@ -20,17 +20,7 @@ export default class Gallery extends Vue {
     console.log('Created');
     imageService.getImages()
             .then(response => this.images = response.data)
-            .catch(reason => {
-              console.log('Failed', reason);
-              this.images = [
-                { thumbnail: 'https://www.w3schools.com/howto/img_snow.jpg'},
-                { thumbnail: 'https://www.w3schools.com/howto/img_forest.jpg'},
-                { thumbnail: 'https://www.w3schools.com/howto/img_mountains.jpg'},
-                { thumbnail: 'https://www.w3schools.com/howto/img_snow.jpg'},
-                { thumbnail: 'https://www.w3schools.com/howto/img_forest.jpg'},
-                { thumbnail: 'https://www.w3schools.com/howto/img_mountains.jpg'},
-              ];
-            });
+            .catch(reason => console.log('Failed', reason));
   }
 }
 </script>

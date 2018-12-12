@@ -75,7 +75,7 @@ public class S3Repository {
                             throw new RuntimeException(e);
                         }
                     })
-                    .map(item -> Image.from(item.objectName()));
+                    .map(item -> Image.from(item.objectName(), item.objectName()));
 
             return Flux.fromStream(items);
         } catch (Exception e) {

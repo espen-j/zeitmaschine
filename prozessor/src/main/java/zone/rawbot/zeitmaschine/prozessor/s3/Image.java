@@ -13,9 +13,10 @@ public class Image {
     private String name;
     private String thumbnail;
 
-    public static Image from(String name) {
+    public static Image from(String name, String thumbnail) {
         Image image = new Image();
         image.name = name;
+        image.thumbnail = "http://localhost:8080/image/" + thumbnail;
         return image;
     }
 }
