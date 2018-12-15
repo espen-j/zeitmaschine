@@ -59,7 +59,7 @@ public class S3Repository {
         return null;
     }
 
-    public Optional<String> getImage(String key) {
+    public Optional<Image> getImage(String key) {
         try {
             ObjectStat stat = minioClient.statObject(BUCKET_NAME, key);
             String contentType = stat.contentType();
@@ -67,8 +67,9 @@ public class S3Repository {
                 InputStream inputStream = minioClient.getObject(BUCKET_NAME, key);
                 Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
                 metadata.getDirectories().forEach(directory -> log.info(directory.getName()));
+                Image image = Image.from(key, key);
+                return Optional.of(image);
             }
-            return Optional.of(minioClient.getObjectUrl(BUCKET_NAME, key));
 
         } catch (Exception e) {
             log.error("Could not get image url for '{}'.", key, e);
