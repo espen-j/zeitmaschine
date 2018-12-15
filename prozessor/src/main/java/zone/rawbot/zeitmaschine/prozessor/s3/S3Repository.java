@@ -15,6 +15,11 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -40,7 +45,13 @@ public class S3Repository {
     public Resource getImageAsData(String key) {
         try {
             InputStream object = minioClient.getObject(BUCKET_NAME, key);
-            InputStreamResource resource = new InputStreamResource(object);
+            BufferedImage image = scaleImage(ImageIO.read(object), 250, 250, Color.BLACK);
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(image, "gif", os);
+            InputStream is = new ByteArrayInputStream(os.toByteArray());
+
+            InputStreamResource resource = new InputStreamResource(is);
             return resource;
         } catch (Exception e) {
             log.error("Error getting object.", e);
@@ -82,6 +93,30 @@ public class S3Repository {
             log.error("Error occurred: " + e);
         }
         return Flux.empty();
+    }
+
+    public BufferedImage scaleImage(BufferedImage img, int width, int height,
+                                    Color background) {
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+        if (imgWidth*height < imgHeight*width) {
+            width = imgWidth*height/imgHeight;
+        } else {
+            height = imgHeight*width/imgWidth;
+        }
+        BufferedImage newImage = new BufferedImage(width, height,
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = newImage.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.setBackground(background);
+            g.clearRect(0, 0, width, height);
+            g.drawImage(img, 0, 0, width, height, null);
+        } finally {
+            g.dispose();
+        }
+        return newImage;
     }
 
 }
