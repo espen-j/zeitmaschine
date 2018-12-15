@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { Image } from './image';
+import {Image} from './image';
 
 class ImageService {
     constructor() {
