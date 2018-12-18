@@ -8,8 +8,6 @@ import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -18,7 +16,6 @@ import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Optional;
@@ -42,17 +39,15 @@ public class S3Repository {
         this.minioClient = new MinioClient(ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY);
     }
 
-    public Resource getImageAsData(String key) {
-        try {
-            InputStream object = minioClient.getObject(BUCKET_NAME, key);
+    public byte[] getImageAsData(String key) {
+        try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
             BufferedImage image = scaleImage(ImageIO.read(object), 250, 250, Color.BLACK);
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(image, "gif", os);
-            InputStream is = new ByteArrayInputStream(os.toByteArray());
+            ImageIO.write(image, "jpg", os);
+            os.toByteArray();
 
-            InputStreamResource resource = new InputStreamResource(is);
-            return resource;
+            return os.toByteArray();
         } catch (Exception e) {
             log.error("Error getting object.", e);
         }

@@ -3,7 +3,10 @@ package zone.rawbot.zeitmaschine.prozessor.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,29 +28,22 @@ public class ImageEndpoint {
         this.repository = repository;
     }
 
-    @GetMapping("/{name}")
-    public Resource thumbnail(@PathVariable String name) {
+    @GetMapping(value = "/{name}")
+    public ResponseEntity<Resource> thumbnail(@PathVariable String name) {
 
-        // TODO
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
+        // return Mono.just(new ByteArrayResource(data)); - no content type sent
 
-        return repository.getImageAsData(name);
-        /*return ResponseEntity
+        byte[] data = repository.getImageAsData(name);
+
+        return ResponseEntity
                 .ok()
                 .contentType(MediaType.IMAGE_JPEG)
-                .body(BodyInserters.fromResource(image));*/
-
-/*        Flux<DataBuffer> publisher = DataBufferUtils.readInputStream(() -> repository.getImageAsData(name), new DefaultDataBufferFactory(), 1024);
-        BodyInserter<Flux<DataBuffer>, ReactiveHttpOutputMessage> inserter = BodyInserters.fromDataBuffers(publisher);
-        return ServerResponse
-                .ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .body(inserter);*/
-
+                .body(new ByteArrayResource(data));
     }
 
-    @GetMapping()
+    @GetMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public Flux<Image> images() {
         return repository.getImages();
     }
