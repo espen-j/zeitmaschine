@@ -1,7 +1,5 @@
 package zone.rawbot.zeitmaschine.prozessor.s3;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.metadata.Metadata;
 import io.minio.MinioClient;
 import io.minio.ObjectStat;
 import io.minio.errors.InvalidEndpointException;
@@ -58,9 +56,6 @@ public class S3Repository {
             ObjectStat stat = minioClient.statObject(BUCKET_NAME, key);
             String contentType = stat.contentType();
             if (contentType.equals(MediaType.IMAGE_JPEG_VALUE)) {
-                InputStream inputStream = minioClient.getObject(BUCKET_NAME, key);
-                Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
-                metadata.getDirectories().forEach(directory -> log.info(directory.getName()));
                 Image image = Image.from(key, key);
                 return Optional.of(image);
             }
