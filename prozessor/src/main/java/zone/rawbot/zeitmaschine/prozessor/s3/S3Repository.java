@@ -45,7 +45,6 @@ public class S3Repository {
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", os);
-            os.toByteArray();
 
             return os.toByteArray();
         } catch (Exception e) {
