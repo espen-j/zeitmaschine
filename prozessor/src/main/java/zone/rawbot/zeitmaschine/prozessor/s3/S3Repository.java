@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
@@ -66,7 +65,7 @@ public class S3Repository {
         return Optional.empty();
     }
 
-    public Flux<Image> getImages() {
+    public Stream<Image> getImages() {
         try {
             Stream<Image> items = StreamSupport.stream(minioClient.listObjects(BUCKET_NAME).spliterator(), false)
                     .map(itemResult -> {
@@ -78,11 +77,11 @@ public class S3Repository {
                     })
                     .map(item -> Image.from(item.objectName(), item.objectName()));
 
-            return Flux.fromStream(items);
+            return items;
         } catch (Exception e) {
             log.error("Error occurred: " + e);
         }
-        return Flux.empty();
+        return Stream.empty();
     }
 
     public BufferedImage scaleImage(BufferedImage source, int width, int height,

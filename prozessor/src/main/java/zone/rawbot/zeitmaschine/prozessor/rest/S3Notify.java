@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import zone.rawbot.zeitmaschine.prozessor.index.Indexer;
 import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
@@ -17,6 +18,7 @@ import java.util.List;
  * S3 notify endpoint.
  */
 @RestController
+@RequestMapping("/s3")
 public class S3Notify {
 
     private final static Logger log = LoggerFactory.getLogger(S3Notify.class.getName());
@@ -30,8 +32,8 @@ public class S3Notify {
         this.indexer = indexer;
     }
 
-    @PostMapping("api/webhook")
-    public ResponseEntity post(@RequestBody String json) {
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> notify(@RequestBody String json) {
 
         List<String> keys = JsonPath.read(json, "$.Records[*].s3.object.key");
 
@@ -43,6 +45,11 @@ public class S3Notify {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/reindex")
+    public ResponseEntity<Void> reindex() {
+        indexer.reindex();
+        return ResponseEntity.ok().build();
+    }
 
 
 }

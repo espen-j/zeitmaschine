@@ -19,7 +19,7 @@ export ZM_ACCESS_KEY=test
 export ZM_ACCESS_SECRET=testtest
 export ZM_DOCKER_NAME=zm-dev
 export ZM_DOCKER_HOST=http://127.0.0.1:9000
-export ZM_WEBHOOK_ENDPOINT=http://host.docker.internal:8080/api/webhook
+export ZM_WEBHOOK_ENDPOINT=http://host.docker.internal:8080/s3/webhook
 export ZM_NAME=zm-dev
 ```
 
@@ -51,4 +51,10 @@ docker restart $ZM_DOCKER_NAME
 docker logs $ZM_DOCKER_NAME
 mc cp /Users/espen/temp/pictures/Camera/IMG_20170801_221920.jpg zm-dev/media
 
+```
+
+## Elasticsearch Setup
+
+```
+$ docker run -d -p 9200:9200 -p 9300:9300 -v /Users/espen/development/git/zeitmaschine/contrib/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:6.5.3
 ```
