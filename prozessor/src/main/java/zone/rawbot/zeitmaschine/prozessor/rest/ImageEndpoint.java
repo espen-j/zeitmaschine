@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import zone.rawbot.zeitmaschine.prozessor.s3.Image;
 import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
 
 @RestController
@@ -35,10 +33,5 @@ public class ImageEndpoint {
 
         byte[] data = repository.getImageAsData(name);
         return Mono.just(new ByteArrayResource(data));
-    }
-
-    @GetMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public Flux<Image> images() {
-        return repository.getImages();
     }
 }
