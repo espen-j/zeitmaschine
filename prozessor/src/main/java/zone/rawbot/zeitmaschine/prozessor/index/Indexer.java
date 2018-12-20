@@ -43,7 +43,7 @@ public class Indexer {
 
         // TODO delete index - fails when no such index
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(ELASTIC_INDEX);
+        //restTemplate.delete(ELASTIC_INDEX);
 
         // re-index
         repository.getImages().forEach( image -> index(image));
