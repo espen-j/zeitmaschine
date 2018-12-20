@@ -16,7 +16,7 @@ class ImageService {
                 from,
                 size : PAGING_SIZE,
                 sort: [
-                    { "created" : {"order" : "asc"}}
+                    { created : {order : 'desc'}}
                 ]
             }, {
             transformResponse: data => {
