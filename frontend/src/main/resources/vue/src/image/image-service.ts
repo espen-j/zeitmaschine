@@ -14,7 +14,10 @@ class ImageService {
 
         return axios.post<Image[]>(ELASTIC_ENDPOINT, {
                 from,
-                size : PAGING_SIZE
+                size : PAGING_SIZE,
+                sort: [
+                    { "created" : {"order" : "asc"}}
+                ]
             }, {
             transformResponse: data => {
                 const json = JSON.parse(data);
