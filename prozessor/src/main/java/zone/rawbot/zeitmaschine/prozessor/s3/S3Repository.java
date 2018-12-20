@@ -13,7 +13,9 @@ import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -28,26 +30,71 @@ public class S3Repository {
     public static final String MINIO_ACCESS_KEY = "test";
     public static final String MINIO_SECRET_KEY = "testtest";
     public static final String BUCKET_NAME = "media";
+    public static final String BUCKET_CACHE_NAME = "media-cache";
 
     private MinioClient minioClient;
 
     @PostConstruct
     private void init() throws InvalidPortException, InvalidEndpointException {
         this.minioClient = new MinioClient(ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY);
+        try {
+            if (!minioClient.bucketExists(BUCKET_CACHE_NAME)) {
+                minioClient.makeBucket(BUCKET_CACHE_NAME);
+            }
+        } catch (Exception e) {
+            log.error("Failed to query or create cache bucket..", e);
+        }
     }
 
     public byte[] getImageAsData(String key) {
-        try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
-            BufferedImage image = scaleImage(ImageIO.read(object), 250, 250, Color.BLACK);
 
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(image, "jpg", os);
+        Optional<BufferedImage> thumb = getThumb(key);
 
-            return os.toByteArray();
-        } catch (Exception e) {
-            log.error("Error getting object.", e);
+        if (thumb.isPresent()) {
+            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                ImageIO.write(thumb.get(), "jpg", os);
+                return os.toByteArray();
+            } catch (IOException e) {
+                log.error("Error writing cached thumb to bytes object.", e);
+            }
+        } else {
+            try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
+                BufferedImage image = scaleImage(ImageIO.read(object), 250, 250, Color.BLACK);
+
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                ImageIO.write(image, "jpg", os);
+
+                byte[] bytes = os.toByteArray();
+                store(key, bytes);
+                return bytes;
+            } catch (Exception e) {
+                // FIXME close streams
+                log.error("Error getting object.", e);
+            }
         }
+
         return null;
+    }
+
+    private void store(String key, byte[] thumbnail) {
+        try (InputStream stream = new ByteArrayInputStream(thumbnail)) {
+            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key), stream, MediaType.IMAGE_JPEG_VALUE);
+        } catch (Exception e) {
+            log.error("Failed to store thumbnail.", e);
+        }
+    }
+
+    private static String getThumbName(String key) {
+        return ".scaled/small/" + key;
+    }
+
+    private Optional<BufferedImage> getThumb(String key) {
+        try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key))) {
+            return Optional.of(ImageIO.read(object));
+        } catch (Exception e) {
+            log.info("Failed to fetch cached thumbnail.");
+        }
+        return Optional.empty();
     }
 
     public Optional<Image> getImage(String key) {
