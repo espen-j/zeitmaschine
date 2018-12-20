@@ -39,8 +39,6 @@ public class S3Notify {
 
         keys.stream()
                 .map(key -> repository.getImage(key))
-                .filter(optional -> optional.isPresent())
-                .map(optional -> optional.get())
                 .forEach(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }

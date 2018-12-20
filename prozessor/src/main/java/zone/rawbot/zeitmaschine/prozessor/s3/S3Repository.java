@@ -1,9 +1,14 @@
 package zone.rawbot.zeitmaschine.prozessor.s3;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.lang.GeoLocation;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.exif.GpsDirectory;
 import io.minio.MinioClient;
-import io.minio.ObjectStat;
 import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
+import io.minio.messages.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -11,15 +16,17 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 @Service
 public class S3Repository {
@@ -59,7 +66,7 @@ public class S3Repository {
             }
         } else {
             try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
-                BufferedImage image = scaleImage(ImageIO.read(object), 250, 250, Color.BLACK);
+                BufferedImage image = scaleImage(ImageIO.read(object), 250, 250);
 
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 ImageIO.write(image, "jpg", os);
@@ -97,42 +104,52 @@ public class S3Repository {
         return Optional.empty();
     }
 
-    public Optional<Image> getImage(String key) {
-        try {
-            ObjectStat stat = minioClient.statObject(BUCKET_NAME, key);
-            String contentType = stat.contentType();
-            if (contentType.equals(MediaType.IMAGE_JPEG_VALUE)) {
-                Image image = Image.from(key, key);
-                return Optional.of(image);
-            }
+    public List<Image> getImages() {
 
+        // FIXME memory?
+        List<Image> images = new ArrayList<>();
+
+        try {
+            minioClient.listObjects(BUCKET_NAME).forEach(itemResult -> {
+                try {
+                    Item item = itemResult.get();
+                    String name = item.objectName();
+                    Image image = getImage(name);
+                    images.add(image);
+                } catch (Exception e) {
+                    log.error("Failed to get item with name.", e);
+                }
+            });
         } catch (Exception e) {
-            log.error("Could not get image url for '{}'.", key, e);
+            log.error("Error fetching all objects from s3: " + e);
         }
-        return Optional.empty();
+        return images;
     }
 
-    public Stream<Image> getImages() {
-        try {
-            Stream<Image> items = StreamSupport.stream(minioClient.listObjects(BUCKET_NAME).spliterator(), false)
-                    .map(itemResult -> {
-                        try {
-                            return itemResult.get();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .map(item -> Image.from(item.objectName(), item.objectName()));
+    public Image getImage(String name) {
+        Image.Builder builder = Image.from(name);
 
-            return items;
+        // FIXME contenttype not checked!
+        try (InputStream stream = minioClient.getObject(BUCKET_NAME, name)) {
+            Metadata metadata = ImageMetadataReader.readMetadata(stream);
+
+            Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
+            subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
+
+            Optional<GpsDirectory> gpsDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(GpsDirectory.class));
+            gpsDirectory.ifPresent(gps -> {
+                GeoLocation geoLocation = gps.getGeoLocation();
+                if (geoLocation != null)
+                builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
+            });
+
         } catch (Exception e) {
-            log.error("Error occurred: " + e);
+            log.error("Error fetching image.", e);
         }
-        return Stream.empty();
+        return builder.build();
     }
 
-    public BufferedImage scaleImage(BufferedImage source, int width, int height,
-                                    Color background) {
+    public BufferedImage scaleImage(BufferedImage source, int width, int height) {
         int imgWidth = source.getWidth();
         int imgHeight = source.getHeight();
         if (imgWidth*height < imgHeight*width) {
@@ -146,7 +163,7 @@ public class S3Repository {
         try {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                     RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setBackground(background);
+            g.setBackground(Color.BLACK);
             g.clearRect(0, 0, width, height);
             g.drawImage(source, 0, 0, width, height, null);
         } finally {
