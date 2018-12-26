@@ -56,15 +56,14 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
     .container {
-        margin: 0 auto;
-        max-width: 1200px;
-        padding: 0 1rem;
+        display: flex;
+        flex-wrap: wrap;
     }
 
     .cell {
-        width: 150px;
-        height: 150px;
-        display: inline-block;
+        width: 25vw;
+        height: 25vw;
+        flex: 0 1 auto;
     }
 
     .cell img {
