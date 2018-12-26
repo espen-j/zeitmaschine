@@ -33,7 +33,7 @@
                     innerHeight = window.innerHeight,
                     offsetHeight = document.documentElement.offsetHeight;
 
-                let bottomOfWindow = scrollTop + innerHeight === offsetHeight;
+                let bottomOfWindow = scrollTop + innerHeight + 50 > offsetHeight;
 
                 if (bottomOfWindow) {
                     console.log('bottom');
