@@ -13,12 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
+import zone.rawbot.zeitmaschine.prozessor.image.Scaler;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -53,7 +52,7 @@ public class S3Repository {
         }
     }
 
-    public byte[] getImageAsData(String key) {
+    public byte[] getImageAsData(String key, Dimension dimension) {
 
         Optional<BufferedImage> thumb = getThumb(key);
 
@@ -66,7 +65,7 @@ public class S3Repository {
             }
         } else {
             try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
-                BufferedImage image = scaleImage(ImageIO.read(object), 250, 250);
+                BufferedImage image = Scaler.scale(ImageIO.read(object), dimension);
 
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 ImageIO.write(image, "jpg", os);
@@ -148,28 +147,4 @@ public class S3Repository {
         }
         return builder.build();
     }
-
-    public BufferedImage scaleImage(BufferedImage source, int width, int height) {
-        int imgWidth = source.getWidth();
-        int imgHeight = source.getHeight();
-        if (imgWidth*height < imgHeight*width) {
-            width = imgWidth*height/imgHeight;
-        } else {
-            height = imgHeight*width/imgWidth;
-        }
-        BufferedImage scaled = new BufferedImage(width, height,
-                BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = scaled.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setBackground(Color.BLACK);
-            g.clearRect(0, 0, width, height);
-            g.drawImage(source, 0, 0, width, height, null);
-        } finally {
-            g.dispose();
-        }
-        return scaled;
-    }
-
 }

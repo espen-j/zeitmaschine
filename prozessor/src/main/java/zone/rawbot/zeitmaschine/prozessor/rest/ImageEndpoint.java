@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
 import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
 
 @RestController
@@ -31,7 +32,7 @@ public class ImageEndpoint {
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
 
-        byte[] data = repository.getImageAsData(name);
+        byte[] data = repository.getImageAsData(name, Dimension.THUMBNAIL);
         return Mono.just(new ByteArrayResource(data));
     }
 }
