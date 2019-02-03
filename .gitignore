@@ -22,3 +22,4 @@ yarn-error.log*
 
 # Ansible
 *.retry
+contrib/ansible/dist
