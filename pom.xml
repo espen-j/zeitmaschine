@@ -23,7 +23,7 @@
   </properties>
 
   <modules>
-    <module>prozessor</module>
+    <module>backend</module>
     <module>frontend</module>
   </modules>
 

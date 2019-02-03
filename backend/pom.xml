@@ -9,10 +9,10 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>zweitmaschine-prozessor</artifactId>
+  <artifactId>zeitmaschine</artifactId>
   <packaging>jar</packaging>
 
-  <name>zeitmaschine: prozessor</name>
+  <name>zeitmaschine: backend</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
