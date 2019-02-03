@@ -23,7 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -92,7 +92,7 @@ public class S3Repository {
     }
 
     private static String getThumbName(String key, Dimension dimension) {
-        return Path.of(dimension.name(), key).toString();
+        return Paths.get(dimension.name(), key).toString();
     }
 
     private Optional<BufferedImage> loadCached(String key, Dimension dimension) {
