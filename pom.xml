@@ -29,6 +29,18 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- dependencies to self -->
+      <dependency>
+        <groupId>zone.rawbot.zeitmaschine</groupId>
+        <artifactId>zeitmaschine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>zone.rawbot.zeitmaschine</groupId>
+        <artifactId>zeitmaschine-frontend</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>io.minio</groupId>
         <artifactId>minio</artifactId>
@@ -39,6 +51,7 @@
         <artifactId>javax.inject</artifactId>
         <version>1</version>
       </dependency>
+
 
       <!-- Test dependencies -->
       <dependency>
