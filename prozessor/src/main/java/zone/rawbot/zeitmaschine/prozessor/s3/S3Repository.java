@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -54,11 +55,11 @@ public class S3Repository {
 
     public byte[] getImageAsData(String key, Dimension dimension) {
 
-        Optional<BufferedImage> thumb = getThumb(key);
+        Optional<BufferedImage> cached = loadCached(key, dimension);
 
-        if (thumb.isPresent()) {
+        if (cached.isPresent()) {
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                ImageIO.write(thumb.get(), "jpg", os);
+                ImageIO.write(cached.get(), "jpg", os);
                 return os.toByteArray();
             } catch (IOException e) {
                 log.error("Error writing cached thumb to bytes object.", e);
@@ -71,7 +72,7 @@ public class S3Repository {
                 ImageIO.write(image, "jpg", os);
 
                 byte[] bytes = os.toByteArray();
-                store(key, bytes);
+                cache(key, bytes, dimension);
                 return bytes;
             } catch (Exception e) {
                 // FIXME close streams
@@ -82,20 +83,20 @@ public class S3Repository {
         return null;
     }
 
-    private void store(String key, byte[] thumbnail) {
+    private void cache(String key, byte[] thumbnail, Dimension dimension) {
         try (InputStream stream = new ByteArrayInputStream(thumbnail)) {
-            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key), stream, MediaType.IMAGE_JPEG_VALUE);
+            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key, dimension), stream, MediaType.IMAGE_JPEG_VALUE);
         } catch (Exception e) {
-            log.error("Failed to store thumbnail.", e);
+            log.error("Failed to cache scaled image.", e);
         }
     }
 
-    private static String getThumbName(String key) {
-        return ".scaled/small/" + key;
+    private static String getThumbName(String key, Dimension dimension) {
+        return Path.of(dimension.name(), key).toString();
     }
 
-    private Optional<BufferedImage> getThumb(String key) {
-        try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key))) {
+    private Optional<BufferedImage> loadCached(String key, Dimension dimension) {
+        try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key, dimension))) {
             return Optional.of(ImageIO.read(object));
         } catch (Exception e) {
             log.info("Failed to fetch cached thumbnail.");

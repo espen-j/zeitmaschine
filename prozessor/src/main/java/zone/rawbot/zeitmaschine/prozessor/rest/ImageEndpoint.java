@@ -26,13 +26,12 @@ public class ImageEndpoint {
         this.repository = repository;
     }
 
-    @GetMapping(value = "/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public Mono<ByteArrayResource> thumbnail(@PathVariable String name) {
+    @GetMapping(value = "/{name}/{dimension}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public Mono<ByteArrayResource> image(@PathVariable String name, String dimension) {
 
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
-
-        byte[] data = repository.getImageAsData(name, Dimension.THUMBNAIL);
+        byte[] data = repository.getImageAsData(name, Dimension.valueOf(dimension.toUpperCase()));
         return Mono.just(new ByteArrayResource(data));
     }
 }

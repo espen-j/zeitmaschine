@@ -1,6 +1,7 @@
 package zone.rawbot.zeitmaschine.prozessor.s3;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
 
 import java.util.Date;
 
@@ -41,7 +42,7 @@ public class Image {
 
         private Builder(String name) {
             this.name = name;
-            this.thumbnail = "http://localhost:8080/image/" + name;
+            this.thumbnail = "http://localhost:8080/image/" + name + Dimension.THUMBNAIL.toString();
         }
 
         public Builder location(double latitude, double longitude) {
