@@ -1,0 +1,10 @@
+s3:
+    host: http://localhost:9000
+elasticsearch:
+    host: http://localhost:9200/zeitmaschine
+---
+
+spring:
+    profiles: production
+logging:
+    file: /var/log/zeitmaschine/zeitmaschine.log
