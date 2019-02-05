@@ -11,6 +11,7 @@ import io.minio.errors.InvalidPortException;
 import io.minio.messages.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
@@ -33,17 +34,25 @@ public class S3Repository {
 
     private final static Logger log = LoggerFactory.getLogger(S3Repository.class.getName());
 
-    public static final String ENDPOINT = "http://localhost:9000";
-    public static final String MINIO_ACCESS_KEY = "test";
-    public static final String MINIO_SECRET_KEY = "testtest";
     public static final String BUCKET_NAME = "media";
     public static final String BUCKET_CACHE_NAME = "media-cache";
 
+    private final String host;
+    private final String key;
+    private final String secret;
+
     private MinioClient minioClient;
+
+    @Autowired
+    public S3Repository(S3Config config) {
+        this.host = config.getHost();
+        this.key = config.getAccess().getKey();
+        this.secret = config.getAccess().getSecret();
+    }
 
     @PostConstruct
     private void init() throws InvalidPortException, InvalidEndpointException {
-        this.minioClient = new MinioClient(ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY);
+        this.minioClient = new MinioClient(host, key, secret);
         try {
             if (!minioClient.bucketExists(BUCKET_CACHE_NAME)) {
                 minioClient.makeBucket(BUCKET_CACHE_NAME);
