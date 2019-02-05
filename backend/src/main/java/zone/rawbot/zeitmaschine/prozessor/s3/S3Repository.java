@@ -52,6 +52,7 @@ public class S3Repository {
 
     @PostConstruct
     private void init() throws InvalidPortException, InvalidEndpointException {
+        log.info("s3 host: {} key: {}", host, key);
         this.minioClient = new MinioClient(host, key, secret);
         try {
             if (!minioClient.bucketExists(BUCKET_CACHE_NAME)) {
