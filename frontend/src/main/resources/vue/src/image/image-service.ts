@@ -1,18 +1,20 @@
 import axios from 'axios';
 import {Image} from './image';
 
-const ELASTIC_ENDPOINT: string = 'http://localhost:9200/zeitmaschine/image/_search';
 const PAGING_SIZE: number = 64;
 
 class ImageService {
 
+    private readonly endpoint: string;
+
     constructor() {
-        console.log('creating new instance of image-service');
+        this.endpoint = process.env.VUE_APP_ZM_ELASTIC_ENDPOINT;
+        console.log('creating new instance of image-service with endpoint: ' + this.endpoint);
     }
 
     public getImages(from: number = 0) {
 
-        return axios.post<Image[]>(ELASTIC_ENDPOINT, {
+        return axios.post<Image[]>(this.endpoint, {
                 from,
                 size : PAGING_SIZE,
                 sort: [
