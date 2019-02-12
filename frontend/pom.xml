@@ -53,12 +53,12 @@
           </execution>
           <!-- Build and minify static files -->
           <execution>
-            <id>npm run build</id>
+            <id>npm run build-production</id>
             <goals>
               <goal>npm</goal>
             </goals>
             <configuration>
-              <arguments>run build</arguments>
+              <arguments>run build-production</arguments>
             </configuration>
           </execution>
         </executions>
