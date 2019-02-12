@@ -16,6 +16,12 @@
     <frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
   </properties>
   <build>
+    <resources>
+      <resource>
+        <directory>target/dist</directory>
+        <targetPath>static</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>com.github.eirslett</groupId>
