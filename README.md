@@ -67,9 +67,12 @@ $ docker run -d -p 9200:9200 -p 9300:9300 -v /Users/espen/development/git/zeitma
 
 ### Create index with geopoint property
 
+*Note:* This is done on startup by the application
+
 Other fields are auto mapped, but:
 ``` 
 $ curl -X DELETE http://localhost:9200/zeitmaschine
+# Can be done in one step, see code:
 $ curl -X PUT -H 'Content-Type: application/json' -d '{}' http://localhost:9200/zeitmaschine
 $ curl -X PUT -H 'Content-Type: application/json' -d '{ "properties": {"location": {"type": "geo_point"}}}' http://localhost:9200/zeitmaschine/_mapping/image
 $ curl http://localhost:9200/zeitmaschine/_mapping/image | jq .
