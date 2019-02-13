@@ -4,7 +4,9 @@ s3:
         key: "test"
         secret: "testtest"
 elasticsearch:
-    host: http://localhost:9200/zeitmaschine/image
+    host: http://localhost:9200
+    index: "zeitmaschine"
+    resource: "image"
 ---
 
 spring:

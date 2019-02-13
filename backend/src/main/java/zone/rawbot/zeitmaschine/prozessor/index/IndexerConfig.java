@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 public class IndexerConfig {
 
     private String host;
+    private String index;
+    private String resource;
 
     public String getHost() {
         return host;
@@ -15,6 +17,22 @@ public class IndexerConfig {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
 }
