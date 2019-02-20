@@ -47,14 +47,17 @@ public class Indexer {
         ReadContext document = JsonPath.parse(existing.getBody());
 
         Map<String, String> zm = document.read("$");
-        if (!zm.containsKey(index)) {
+
+        boolean exists = zm.containsKey(index);
+        LOG.info("Index '{}' existing: {}", index, exists);
+        if (!exists) {
             createIndex();
         }
     }
 
     private void createIndex() {
 
-        LOG.info("Index not found. Creating it.. ");
+        LOG.info("Creating index '{}'.", indexUrl);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -77,8 +80,11 @@ public class Indexer {
     public void reindex() {
 
         // TODO delete index - fails when no such index
+        LOG.info("Recreating index '{}'.", indexUrl);
         RestTemplate restTemplate = new RestTemplate();
-        //restTemplate.delete(ELASTIC_INDEX);
+        restTemplate.delete(indexUrl);
+
+        createIndex();
 
         // re-index
         repository.getImages().forEach(image -> index(image));
