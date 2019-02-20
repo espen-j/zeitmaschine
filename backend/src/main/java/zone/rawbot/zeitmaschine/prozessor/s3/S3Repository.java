@@ -25,9 +25,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 public class S3Repository {
@@ -114,10 +113,7 @@ public class S3Repository {
         return Optional.empty();
     }
 
-    public List<Image> getImages() {
-
-        // FIXME memory?
-        List<Image> images = new ArrayList<>();
+    public void getImages(Consumer<Image> indexer) {
 
         try {
             minioClient.listObjects(BUCKET_NAME).forEach(itemResult -> {
@@ -125,7 +121,7 @@ public class S3Repository {
                     Item item = itemResult.get();
                     String name = item.objectName();
                     Image image = getImage(name);
-                    images.add(image);
+                    indexer.accept(image);
                 } catch (Exception e) {
                     log.error("Failed to get item with name.", e);
                 }
@@ -133,7 +129,6 @@ public class S3Repository {
         } catch (Exception e) {
             log.error("Error fetching all objects from s3: " + e);
         }
-        return images;
     }
 
     public Image getImage(String name) {
