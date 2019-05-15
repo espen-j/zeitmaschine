@@ -61,9 +61,7 @@ public class Indexer {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // need to manually create geo_point mapping, others are created ad-hoc.
-        HttpEntity<String> entity = new HttpEntity<>("{\"mappings\": {\"image\": {\"properties\": {\"location\": {\"type\": \"geo_point\"}}}}}", headers);
-        restTemplate.put(indexUrl, entity);
+        restTemplate.put(indexUrl, null);
     }
 
     public void index(Image image) {

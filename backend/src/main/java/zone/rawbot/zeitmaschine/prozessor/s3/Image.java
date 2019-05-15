@@ -1,23 +1,17 @@
 package zone.rawbot.zeitmaschine.prozessor.s3;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
 
 import java.util.Date;
 
 public class Image {
 
     private String name;
-    private String thumbnail;
     private Date created;
     private Location location;
 
     public String getName() {
         return name;
-    }
-
-    public String getThumbnail() {
-        return thumbnail;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern ="yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
@@ -36,19 +30,17 @@ public class Image {
     public static class Builder {
 
         private final String name;
-        private final String thumbnail;
         private Location location;
         private Date created;
 
         private Builder(String name) {
             this.name = name;
-            this.thumbnail = "http://localhost:8080/image/" + name + Dimension.THUMBNAIL.toString();
         }
 
         public Builder location(double latitude, double longitude) {
             Location location = new Location();
-            location.latitude = latitude;
-            location.longitude = longitude;
+            location.lat = latitude;
+            location.lon = longitude;
             this.location = location;
             return this;
         }
@@ -61,7 +53,6 @@ public class Image {
         public Image build() {
             Image image = new Image();
             image.name = this.name;
-            image.thumbnail = this.thumbnail;
             image.location = this.location;
             image.created = this.created;
             return image;
@@ -71,15 +62,15 @@ public class Image {
 
     public static class Location {
 
-        private double latitude;
-        private double longitude;
+        private double lat;
+        private double lon;
 
-        public double getLatitude() {
-            return latitude;
+        public double getLat() {
+            return lat;
         }
 
-        public double getLongitude() {
-            return longitude;
+        public double getLon() {
+            return lon;
         }
     }
 }

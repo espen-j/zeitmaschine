@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <img :src="image.thumbnail">
+            <img :src="'image/' + image.name + '/thumbnail'">
         </div>
         <span></span>
     </div>
