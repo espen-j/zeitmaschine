@@ -22,7 +22,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -62,7 +61,7 @@ public class S3Repository {
         }
     }
 
-    public byte[] getImageAsData(String key, Dimension dimension) {
+    public byte[] getImageAsData(String key, Dimension dimension) throws Exception {
 
         Optional<BufferedImage> cached = loadCached(key, dimension);
 
@@ -70,26 +69,20 @@ public class S3Repository {
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 ImageIO.write(cached.get(), "jpg", os);
                 return os.toByteArray();
-            } catch (IOException e) {
-                log.error("Error writing cached thumb to bytes object.", e);
             }
         } else {
-            try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
+            try (InputStream object = minioClient.getObject(BUCKET_NAME, key);
+                 ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+
                 BufferedImage image = Scaler.scale(ImageIO.read(object), dimension);
 
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
                 ImageIO.write(image, "jpg", os);
 
                 byte[] bytes = os.toByteArray();
                 cache(key, bytes, dimension);
                 return bytes;
-            } catch (Exception e) {
-                // FIXME close streams
-                log.error("Error getting object.", e);
             }
         }
-
-        return null;
     }
 
     private void cache(String key, byte[] thumbnail, Dimension dimension) {
@@ -132,10 +125,11 @@ public class S3Repository {
     }
 
     public Image getImage(String name) {
-        Image.Builder builder = Image.from(name);
 
         // FIXME contenttype not checked!
         try (InputStream stream = minioClient.getObject(BUCKET_NAME, name)) {
+            Image.Builder builder = Image.from(name);
+
             Metadata metadata = ImageMetadataReader.readMetadata(stream);
 
             Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
@@ -145,12 +139,11 @@ public class S3Repository {
             gpsDirectory.ifPresent(gps -> {
                 GeoLocation geoLocation = gps.getGeoLocation();
                 if (geoLocation != null)
-                builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
+                    builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
             });
-
+            return builder.build();
         } catch (Exception e) {
-            log.error("Error fetching image.", e);
+            throw new RuntimeException("Error fetching image.", e);
         }
-        return builder.build();
     }
 }
