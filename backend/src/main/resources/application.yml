@@ -13,3 +13,7 @@ spring:
     profiles: production
 logging:
     file: /var/log/zeitmaschine/zeitmaschine.log
+s3:
+    host: http://s3.zeitmaschine.netz
+elasticsearch:
+    host: http://elastic.zeitmaschine.netz
