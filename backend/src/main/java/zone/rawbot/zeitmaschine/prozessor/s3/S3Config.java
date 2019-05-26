@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class S3Config {
 
     private String host;
+    private boolean webhook;
     private Access access;
 
     public Access getAccess() {
@@ -24,6 +25,14 @@ public class S3Config {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public boolean isWebhook() {
+        return webhook;
+    }
+
+    public void setWebhook(boolean webhook) {
+        this.webhook = webhook;
     }
 
     // needs to be static, PITA exception otherwise

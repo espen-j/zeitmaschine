@@ -1,5 +1,6 @@
 s3:
     host: http://localhost:9000
+    webhook: true
     access:
         key: "test"
         secret: "testtest"
