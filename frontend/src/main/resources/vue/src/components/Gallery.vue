@@ -29,11 +29,11 @@
 
         private registerScrollHandler() {
             window.addEventListener('scroll', throttle(() => {
-                let scrollTop = document.documentElement.scrollTop,
-                    innerHeight = window.innerHeight,
-                    offsetHeight = document.documentElement.offsetHeight;
+                const scrollTop = document.documentElement.scrollTop;
+                const innerHeight = window.innerHeight;
+                const offsetHeight = document.documentElement.offsetHeight;
 
-                let bottomOfWindow = scrollTop + innerHeight + 50 > offsetHeight;
+                const bottomOfWindow = scrollTop + innerHeight + 50 > offsetHeight;
 
                 if (bottomOfWindow) {
                     console.log('bottom');
