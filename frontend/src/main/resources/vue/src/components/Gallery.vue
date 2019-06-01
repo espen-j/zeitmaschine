@@ -1,23 +1,31 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <img :src="'image/thumbnail?name=' + image.name">
+            <img :src="'image/thumbnail?name=' + image.name" v-on:click="open(image)">
         </div>
         <span></span>
+        <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
     </div>
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from 'vue-property-decorator';
+    import {Component, Prop, Vue} from 'vue-property-decorator';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import debounce from 'lodash.debounce';
     import throttle from 'lodash.throttle';
+    import Slider from './Slider.vue';
 
-    @Component
+    @Component({
+        components: {
+            Slider
+        }
+    })
     export default class Gallery extends Vue {
 
         private images: Image[] = [];
+        private selected?: Image;
+        private sliderVisible: boolean = false;
 
         protected created() {
             imageService.getImages()
@@ -25,6 +33,17 @@
                 .catch(reason => console.log('Failed', reason));
 
             this.registerScrollHandler();
+        }
+
+        protected open(image: Image) {
+            this.selected = image;
+            this.sliderVisible = true;
+            console.info(image);
+        }
+
+        protected closeSlider() {
+            this.selected = undefined;
+            this.sliderVisible = false;
         }
 
         private registerScrollHandler() {
