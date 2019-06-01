@@ -54,7 +54,7 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style>
+<style lang="scss">
     .container {
         display: flex;
         flex-wrap: wrap;
@@ -64,12 +64,12 @@
         width: 25vw;
         height: 25vw;
         flex: 0 1 auto;
-    }
 
-    .cell img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     }
 
 </style>
