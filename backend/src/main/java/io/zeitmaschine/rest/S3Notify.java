@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.rest;
+package io.zeitmaschine.rest;
 
 import com.jayway.jsonpath.JsonPath;
 import org.slf4j.Logger;
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import zone.rawbot.zeitmaschine.prozessor.index.Indexer;
-import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
+import io.zeitmaschine.index.Indexer;
+import io.zeitmaschine.s3.S3Repository;
 
 import java.util.List;
 

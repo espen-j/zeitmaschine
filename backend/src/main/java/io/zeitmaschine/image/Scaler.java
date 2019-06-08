@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.image;
+package io.zeitmaschine.image;
 
 import com.mortennobel.imagescaling.DimensionConstrain;
 import com.mortennobel.imagescaling.ResampleFilters;

@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.s3;
+package io.zeitmaschine.s3;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 

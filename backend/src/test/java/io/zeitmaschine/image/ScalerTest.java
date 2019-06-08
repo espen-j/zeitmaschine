@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.image;
+package io.zeitmaschine.image;
 
 import com.twelvemonkeys.image.ResampleOp;
 import org.imgscalr.Scalr;

@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor;
+package io.zeitmaschine;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;

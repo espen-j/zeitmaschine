@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.rest;
+package io.zeitmaschine.rest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
-import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
+import io.zeitmaschine.image.Dimension;
+import io.zeitmaschine.s3.S3Repository;
 
 @RestController
 @RequestMapping("/image")

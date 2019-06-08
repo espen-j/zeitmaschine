@@ -1,7 +1,8 @@
-package zone.rawbot.zeitmaschine.prozessor.index;
+package io.zeitmaschine.index;
 
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
+import io.zeitmaschine.s3.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import zone.rawbot.zeitmaschine.prozessor.s3.Image;
-import zone.rawbot.zeitmaschine.prozessor.s3.S3Repository;
+import io.zeitmaschine.s3.S3Repository;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;

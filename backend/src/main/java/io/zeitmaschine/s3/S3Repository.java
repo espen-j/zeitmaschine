@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.s3;
+package io.zeitmaschine.s3;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.GeoLocation;
@@ -13,13 +13,13 @@ import io.minio.messages.Filter;
 import io.minio.messages.Item;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
+import io.zeitmaschine.image.Scaler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import zone.rawbot.zeitmaschine.prozessor.image.Dimension;
-import zone.rawbot.zeitmaschine.prozessor.image.Scaler;
+import io.zeitmaschine.image.Dimension;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;

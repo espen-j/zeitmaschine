@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.image;
+package io.zeitmaschine.image;
 
 import org.junit.jupiter.api.Test;
 

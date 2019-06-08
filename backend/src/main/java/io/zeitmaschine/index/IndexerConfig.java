@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor.index;
+package io.zeitmaschine.index;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

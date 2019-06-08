@@ -1,4 +1,4 @@
-package zone.rawbot.zeitmaschine.prozessor;
+package io.zeitmaschine;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
