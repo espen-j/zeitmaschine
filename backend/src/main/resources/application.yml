@@ -8,6 +8,15 @@ elasticsearch:
     host: http://localhost:9200
     index: "zeitmaschine"
     resource: "image"
+
+spring:
+    security:
+        oauth2:
+            resourceserver:
+                id: http://localhost:8080/
+                jwk:
+                    jwk-set-uri: https://zeitmaschine.eu.auth0.com/.well-known/jwks.json
+                    issuer-uri: https://zeitmaschine.eu.auth0.com/
 ---
 
 spring:
