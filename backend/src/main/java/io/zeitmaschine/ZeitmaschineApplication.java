@@ -17,7 +17,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @SpringBootApplication
-public class ProzessorApplication {
+public class ZeitmaschineApplication {
 
     // https://github.com/spring-projects/spring-boot/issues/9785
     @Value("classpath:/static/index.html")
@@ -40,6 +40,6 @@ public class ProzessorApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(ProzessorApplication.class, args);
+        SpringApplication.run(ZeitmaschineApplication.class, args);
     }
 }
