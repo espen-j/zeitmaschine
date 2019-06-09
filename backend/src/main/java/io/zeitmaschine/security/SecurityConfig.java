@@ -18,9 +18,8 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http){
         http
+                .csrf().disable()
                 .authorizeExchange()
-                .pathMatchers(HttpMethod.GET,"/image/**").authenticated()
-                .pathMatchers(HttpMethod.POST,"/zeitmaschine/**").authenticated()
                 .anyExchange().permitAll()
                 .and()
                 .oauth2ResourceServer()
