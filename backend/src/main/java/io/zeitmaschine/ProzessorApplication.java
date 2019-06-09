@@ -1,8 +1,11 @@
 package io.zeitmaschine;
 
+import io.zeitmaschine.index.IndexerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -26,6 +29,14 @@ public class ProzessorApplication {
         return route(
                 GET("/").and(accept(TEXT_HTML)), request -> ServerResponse.ok().syncBody(indexHtml))
                 .andRoute(GET("/login").and(accept(TEXT_HTML)), request -> ServerResponse.ok().syncBody(indexHtml));
+    }
+
+    @Bean
+    public RouteLocator apiGateway(RouteLocatorBuilder builder, IndexerConfig indexConfig) {
+        return builder.routes()
+                .route("elasticsearch", r -> r.path("/zeitmaschine/**")
+                        .uri(indexConfig.getHost()))
+                .build();
     }
 
     public static void main(String[] args) {
