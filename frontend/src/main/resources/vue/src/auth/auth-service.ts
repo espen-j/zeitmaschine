@@ -10,15 +10,10 @@ const webAuth = new auth0.WebAuth({
 });
 
 const localStorageKey = 'loggedIn';
-const loginEvent = 'loginEvent';
-
 
 class AuthService extends EventEmitter {
     private readonly domain: string;
     private clientId: string;
-
-    private idToken?: string;
-    private tokenExpiry: number = Date.now();
 
 
     constructor() {
@@ -30,74 +25,31 @@ class AuthService extends EventEmitter {
 
     // Starts the user login flow
     public login() {
-        webAuth.authorize({});
+        webAuth.authorize();
     }
 
     // Handles the callback request from Auth0
-    private handleAuthentication() {
+    public handleAuthentication() {
         return new Promise((resolve, reject) => {
             webAuth.parseHash((error: Auth0Error, authResult: Auth0DecodedHash | null) => {
                 if (error) {
+                    console.log('error auth0');
                     reject(error);
                 } else {
+                    console.log('NOT error auth0');
                     if (authResult !== null) {
-                        this.localLogin(authResult);
-                        resolve(authResult.idToken);
+                        console.log('success auth0');
+                        localStorage.setItem(localStorageKey, 'true');
+                        resolve();
                     }
-
                 }
             });
         });
     }
 
-    private localLogin(authResult: Auth0DecodedHash) {
-        this.idToken = authResult.idToken;
-        const profile = authResult.idTokenPayload;
-
-        // Convert the JWT expiry time from seconds to milliseconds
-        this.tokenExpiry = new Date(profile.exp * 1000).getTime();
-
-        localStorage.setItem(localStorageKey, 'true');
-
-        this.emit(loginEvent, {
-            loggedIn: true,
-            profile: authResult.idTokenPayload,
-            state: authResult.appState || {}
-        });
-    }
-
-    private renewTokens() {
-        return new Promise((resolve, reject) => {
-            if (localStorage.getItem(localStorageKey) !== 'true') {
-                return reject('Not logged in');
-            }
-
-            webAuth.checkSession({}, (err, authResult) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.localLogin(authResult);
-                    resolve(authResult);
-                }
-            });
-        });
-    }
-
-    private logOut() {
-        localStorage.removeItem(localStorageKey);
-
-        this.tokenExpiry = Date.now();
-
-        webAuth.logout({
-            returnTo: window.location.origin
-        });
-
-        this.emit(loginEvent, { loggedIn: false });
-    }
-
-    private isAuthenticated() {
+    public isAuthenticated() {
         return (
-            Date.now() < this.tokenExpiry && localStorage.getItem(localStorageKey) === 'true'
+            localStorage.getItem(localStorageKey) === 'true'
         );
     }
 
