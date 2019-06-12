@@ -11,7 +11,8 @@ const router = new Router({
     {
       path: '/',
       name: 'home',
-      component: Gallery
+      component: Gallery,
+      meta: {authRequired: true}
 
     },
     {
@@ -20,6 +21,15 @@ const router = new Router({
       component: Callback
     }
   ]
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.authRequired) {
+    console.log("SHIISH");
+    next();
+  } else {
+    next();
+  }
 });
 
 export default router;
