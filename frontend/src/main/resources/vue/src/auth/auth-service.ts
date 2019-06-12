@@ -1,5 +1,6 @@
 import auth0, {Auth0DecodedHash, Auth0Error} from 'auth0-js';
 import {EventEmitter} from 'events';
+import axios from 'axios';
 
 const webAuth = new auth0.WebAuth({
     domain: process.env.VUE_APP_AUTH0_DOMAIN,
@@ -39,7 +40,15 @@ class AuthService extends EventEmitter {
                     console.log('NOT error auth0');
                     if (authResult !== null) {
                         console.log('success auth0');
+                        console.log(JSON.stringify(authResult));
                         localStorage.setItem(localStorageKey, 'true');
+
+                        axios.interceptors.request.use(config => {
+
+                            config.headers.Authorization = `Bearer ${authResult.idToken}`;
+                            return config;
+                        });
+
                         resolve();
                     }
                 }
