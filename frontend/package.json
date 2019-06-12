@@ -16,7 +16,8 @@
     "lodash.throttle": "^4.0.8",
     "vue": "^2.5.17",
     "vue-class-component": "^7.1.0",
-    "vue-property-decorator": "^8.1.1"
+    "vue-property-decorator": "^8.1.1",
+    "vue-router": "^3.0.3"
   },
   "devDependencies": {
     "@types/lodash.debounce": "^4.0.4",

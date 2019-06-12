@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue} from 'vue-property-decorator';
+    import {Component, Vue} from 'vue-property-decorator';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import debounce from 'lodash.debounce';
