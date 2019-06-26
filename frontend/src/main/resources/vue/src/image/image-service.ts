@@ -15,17 +15,24 @@ class ImageService {
     public getImages(from: number = 0) {
 
         return axios.post<Image[]>(this.endpoint, {
-                from,
-                size : PAGING_SIZE,
-                sort: [
-                    { created : {order : 'desc'}}
-                ]
-            }, {
+            from,
+            size: PAGING_SIZE,
+            sort: [
+                {created: {order: 'desc'}}
+            ]
+        }, {
             transformResponse: data => {
                 const json = JSON.parse(data);
                 return (json.hits) ? this.transform(json.hits) : [];
             }
         });
+    }
+
+    public getImage(url: string) {
+        return axios.request({
+            url: url,
+            responseType: 'blob',
+        })
     }
 
     private transform(json: any): Image[] {

@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <img v-lazyload :data-url="'image/thumbnail?name=' + image.name" v-on:click="open(image)" />
+            <img v-lazyload :data-url="'image/thumbnail?name=' + image.name" v-on:click="open(image)"/>
         </div>
         <span></span>
         <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
@@ -15,7 +15,6 @@
     import debounce from 'lodash.debounce';
     import throttle from 'lodash.throttle';
     import Slider from './Slider.vue';
-    import axios from 'axios'
 
     @Component({
         components: {
@@ -25,20 +24,16 @@
             lazyload: function (el) {
 
                 function loadImage() {
-                    let imageEl = el;
-                    if (imageEl) {
-                        axios.request({
-                            url: imageEl.dataset.url,
-                            responseType: 'blob',
-                        })
+                    if (el instanceof HTMLImageElement && el.dataset.url) {
+                        imageService.getImage(el.dataset.url)
                             .then(response => response.data)
                             .then(blob => URL.createObjectURL(blob))
-                            .then(src => imageEl.src = src)  // OR imageEl.setAttribute("src", src);
+                            .then(src => el.src = src)
                             .catch(e => console.log(e));
                     }
                 }
 
-                let callback = (entries, observer) => {
+                let callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
                             loadImage();
@@ -113,7 +108,7 @@
         height: 25vw;
         flex: 0 1 auto;
 
-         figure, img {
+        img {
             width: 100%;
             height: 100%;
             object-fit: cover;
