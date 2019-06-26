@@ -29,10 +29,7 @@ class ImageService {
     }
 
     public getImage(url: string) {
-        return axios.request({
-            url: url,
-            responseType: 'blob',
-        })
+        return axios.request({url, responseType: 'blob'});
     }
 
     private transform(json: any): Image[] {

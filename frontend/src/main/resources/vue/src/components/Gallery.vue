@@ -21,7 +21,7 @@
             Slider
         },
         directives: {
-            lazyload: function (el) {
+            lazyload: el => {
 
                 function loadImage() {
                     if (el instanceof HTMLImageElement && el.dataset.url) {
@@ -33,15 +33,15 @@
                     }
                 }
 
-                let callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-                    entries.forEach((entry) => {
+                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+                    entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             loadImage();
                             observer.unobserve(el);
                         }
-                    })
+                    });
                 };
-                new IntersectionObserver(callback).observe(el)
+                new IntersectionObserver(callback).observe(el);
             }
         }
     })

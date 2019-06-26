@@ -6,15 +6,15 @@
 
 <script lang="ts">
     import {Component, Vue} from 'vue-property-decorator';
-    import {authService} from "../auth/auth-service";
-    import router from "../router";
+    import {authService} from '../auth/auth-service';
+    import router from '../router';
 
     @Component
     export default class Callback extends Vue {
 
         protected created() {
             console.log('callback created');
-            authService.handleAuthentication().then(() => router.push("/"));
+            authService.handleAuthentication().then(() => router.push('/'));
         }
     }
 </script>

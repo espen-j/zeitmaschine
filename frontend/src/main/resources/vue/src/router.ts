@@ -2,7 +2,7 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import Gallery from './components/Gallery.vue';
 import Callback from './components/Callback.vue';
-import {authService} from "./auth/auth-service";
+import {authService} from './auth/auth-service';
 
 Vue.use(Router);
 
