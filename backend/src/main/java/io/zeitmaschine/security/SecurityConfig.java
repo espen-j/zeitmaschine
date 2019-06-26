@@ -20,6 +20,7 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeExchange()
+                .pathMatchers(HttpMethod.GET,"/image/**").authenticated()
                 .pathMatchers(HttpMethod.POST,"/zeitmaschine/**").authenticated()
                 .anyExchange().permitAll()
                 .and()

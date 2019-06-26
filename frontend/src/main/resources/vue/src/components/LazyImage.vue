@@ -1,27 +1,33 @@
 <template>
     <figure v-lazyload class="image-lazy-wrapper">
-        <img :src="'image/thumbnail?name=' + image.name" v-on:click="open(image)">
+        <img :data-url="'image/thumbnail?name=' + image.name" v-on:click="open(image)">
     </figure>
 </template>
 
 <script lang="ts">
     import {Component, Prop, Vue} from "vue-property-decorator";
     import {Image} from "../image/image";
-
+    import axios from 'axios'
 
     @Component({
         directives: {
-            lazy: function (el) {
-
+            lazyload: function (el) {
 
                 function loadImage() {
                     let imageEl = Array.from(el.children).find(el => el.nodeName === 'IMG');
                     if (imageEl) {
-                        imageEl.src = imageEl.dataset.url
+                        axios.request({
+                            url: imageEl.dataset.url,
+                            responseType: 'blob',
+                        })
+                            .then(response => response.data)
+                            .then(blob => URL.createObjectURL(blob))
+                            .then(src => imageEl.src = src )  // OR imageEl.setAttribute("src", src);
+                            .catch(e => console.log(e));
                     }
                 }
 
-                let newVar = (entries, observer) => {
+                let callback = (entries, observer) => {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
                             loadImage();
@@ -29,9 +35,7 @@
                         }
                     })
                 };
-                new IntersectionObserver(newVar).observe(el)
-
-
+                new IntersectionObserver(callback).observe(el)
             }
         }
     })
