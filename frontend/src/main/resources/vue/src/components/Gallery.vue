@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <img :src="'image/thumbnail?name=' + image.name" v-on:click="open(image)">
+            <LazyImage :image="image" />
         </div>
         <span></span>
         <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
@@ -15,9 +15,11 @@
     import debounce from 'lodash.debounce';
     import throttle from 'lodash.throttle';
     import Slider from './Slider.vue';
+    import LazyImage from "./LazyImage.vue";
 
     @Component({
         components: {
+            LazyImage,
             Slider
         }
     })
