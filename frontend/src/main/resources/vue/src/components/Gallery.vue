@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <LazyImage :image="image" />
+            <img v-lazyload :data-url="'image/thumbnail?name=' + image.name" v-on:click="open(image)" />
         </div>
         <span></span>
         <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
@@ -15,12 +15,39 @@
     import debounce from 'lodash.debounce';
     import throttle from 'lodash.throttle';
     import Slider from './Slider.vue';
-    import LazyImage from "./LazyImage.vue";
+    import axios from 'axios'
 
     @Component({
         components: {
-            LazyImage,
             Slider
+        },
+        directives: {
+            lazyload: function (el) {
+
+                function loadImage() {
+                    let imageEl = el;
+                    if (imageEl) {
+                        axios.request({
+                            url: imageEl.dataset.url,
+                            responseType: 'blob',
+                        })
+                            .then(response => response.data)
+                            .then(blob => URL.createObjectURL(blob))
+                            .then(src => imageEl.src = src)  // OR imageEl.setAttribute("src", src);
+                            .catch(e => console.log(e));
+                    }
+                }
+
+                let callback = (entries, observer) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            loadImage();
+                            observer.unobserve(el);
+                        }
+                    })
+                };
+                new IntersectionObserver(callback).observe(el)
+            }
         }
     })
     export default class Gallery extends Vue {
@@ -86,7 +113,7 @@
         height: 25vw;
         flex: 0 1 auto;
 
-        img {
+         figure, img {
             width: 100%;
             height: 100%;
             object-fit: cover;
