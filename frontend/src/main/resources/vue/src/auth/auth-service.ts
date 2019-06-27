@@ -62,6 +62,9 @@ class AuthService extends EventEmitter {
         );
     }
 
+    reset() {
+        localStorage.removeItem(localStorageKey);
+    }
 }
 // Export a singleton instance in the global namespace
 export const authService = new AuthService();
