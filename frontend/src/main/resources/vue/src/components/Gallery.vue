@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="cell" v-for="image in images">
-            <img v-lazyload :data-url="'image/thumbnail?name=' + image.name" v-on:click="open(image)"/>
+            <img v-lazyload :data-image="image.name" v-on:click="open(image)"/>
         </div>
         <span></span>
         <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
@@ -24,8 +24,8 @@
             lazyload: el => {
 
                 function loadImage() {
-                    if (el instanceof HTMLImageElement && el.dataset.url) {
-                        imageService.getImage(el.dataset.url)
+                    if (el instanceof HTMLImageElement && el.dataset.image) {
+                        imageService.getImage(el.dataset.image)
                             .then(response => response.data)
                             .then(blob => URL.createObjectURL(blob))
                             .then(src => el.src = src)

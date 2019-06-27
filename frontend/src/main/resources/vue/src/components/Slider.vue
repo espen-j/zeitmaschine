@@ -1,22 +1,32 @@
 <template>
     <div class="slider">
         <span class="close-button" v-on:click="close()">X</span>
-        <img :src="'image/small?name=' + image.name">
+        <img :src="src">
     </div>
 </template>
 
 <script lang="ts">
     import {Component, Prop, Vue} from 'vue-property-decorator';
     import {Image} from '../image/image';
+    import {imageService} from '../image/image-service';
 
     @Component
     export default class Slider extends Vue {
 
         @Prop()
         protected image!: Image;
+        private src: string = '';
 
         protected close() {
             this.$emit('close');
+        }
+
+        protected created() {
+            return imageService.getImage(this.image.name, 'small')
+                .then(response => response.data)
+                .then(blob => URL.createObjectURL(blob))
+                .then(src => this.src = src)
+                .catch(e => console.log(e));
         }
     }
 </script>

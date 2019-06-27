@@ -28,7 +28,8 @@ class ImageService {
         });
     }
 
-    public getImage(url: string) {
+    public getImage(name: string, rendition: string = 'thumbnail') {
+        const url: string = `image/${rendition}?name=${name}`;
         return axios.request({url, responseType: 'blob'});
     }
 
