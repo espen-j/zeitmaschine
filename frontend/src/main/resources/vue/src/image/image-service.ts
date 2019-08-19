@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {Image} from './image';
+import {imageCache} from "./image-cache";
 
 const PAGING_SIZE: number = 64;
 
@@ -10,6 +11,9 @@ class ImageService {
     constructor() {
         this.endpoint = process.env.VUE_APP_ZM_ELASTIC_ENDPOINT;
         console.log('creating new instance of image-service with endpoint: ' + this.endpoint);
+        imageCache.initialize()
+            .then(() => console.log("{} created"))
+            .catch(error => console.log("Failed to setup cache: {}", error));
     }
 
     public getImages(from: number = 0) {
@@ -28,9 +32,18 @@ class ImageService {
         });
     }
 
-    public getImage(name: string, rendition: string = 'thumbnail') {
+    public getImage(name: string, rendition: string = 'thumbnail'): Promise<Blob> {
         const url: string = `image/${rendition}?name=${name}`;
-        return axios.request({url, responseType: 'blob'});
+        return imageCache.get(url)
+            .catch(() => {
+                return axios.request({url, responseType: 'blob'})
+                    .then(response => response.data)
+                    .then(data => {
+                        imageCache.set(url, data)
+                            .catch(error => console.log("Error adding '{}' to cache: {}", url, error));
+                        return data;
+                    });
+            });
     }
 
     private transform(json: any): Image[] {

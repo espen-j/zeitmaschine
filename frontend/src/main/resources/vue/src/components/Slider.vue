@@ -23,7 +23,6 @@
 
         protected created() {
             return imageService.getImage(this.image.name, 'small')
-                .then(response => response.data)
                 .then(blob => URL.createObjectURL(blob))
                 .then(src => this.src = src)
                 .catch(e => console.log(e));

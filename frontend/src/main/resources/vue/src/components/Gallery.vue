@@ -26,7 +26,6 @@
                 function loadImage() {
                     if (el instanceof HTMLImageElement && el.dataset.image) {
                         imageService.getImage(el.dataset.image)
-                            .then(response => response.data)
                             .then(blob => URL.createObjectURL(blob))
                             .then(src => el.src = src)
                             .catch(e => console.log(e));
