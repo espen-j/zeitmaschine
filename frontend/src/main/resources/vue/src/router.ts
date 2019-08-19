@@ -26,12 +26,9 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   if (to.meta.authRequired) {
-    console.log("SHIISH");
     if (authService.isAuthenticated()) {
-      console.log("WIN");
       next();
     } else {
-      console.log("FAIL");
       authService.login();
     }
   } else {
