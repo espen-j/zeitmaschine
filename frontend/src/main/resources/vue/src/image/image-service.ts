@@ -12,8 +12,8 @@ class ImageService {
         this.endpoint = process.env.VUE_APP_ZM_ELASTIC_ENDPOINT;
         console.log('creating new instance of image-service with endpoint: ' + this.endpoint);
         imageCache.initialize()
-            .then(() => console.log("{} created"))
-            .catch(error => console.log("Failed to setup cache: {}", error));
+            .then((dbName) => console.log("Cache database '%s' created.", dbName))
+            .catch(error => console.log("Failed to setup cache: %s", error));
     }
 
     public getImages(from: number = 0) {
@@ -39,9 +39,8 @@ class ImageService {
                 return axios.request({url, responseType: 'blob'})
                     .then(response => response.data)
                     .then(data => {
-                        imageCache.set(url, data)
-                            .catch(error => console.log("Error adding '{}' to cache: {}", url, error));
-                        return data;
+                        return imageCache.set(url, data)
+                            .catch(error => console.error("Error adding '%s' to cache: {}", url, error));
                     });
             });
     }

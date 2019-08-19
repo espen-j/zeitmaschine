@@ -13,7 +13,7 @@ class ImageCache {
             };
             request.onsuccess = () => {
                 this.db = request.result;
-                resolve();
+                resolve(dbName);
             };
             request.onerror = () => reject(request.error);
             request.onblocked = () => reject(request.error);
@@ -27,6 +27,9 @@ class ImageCache {
                 .objectStore(imageStore)
                 .get(key);
             request.onsuccess = () => {
+                if (!request.result) {
+                    reject("No result found.")
+                }
                 resolve(request.result)
             };
             request.onerror = (error) => {
