@@ -1,7 +1,17 @@
 <template>
     <div class="slider">
         <span class="close-button" v-on:click="close()">X</span>
-        <img :src="src">
+        <div class="images">
+            <div class="image">
+                <img ref="image" :src="src">
+            </div>
+            <div class="image">
+                <img ref="image" :src="src">
+            </div>
+            <div class="image">
+                <img ref="image" :src="src">
+            </div>
+        </div>
     </div>
 </template>
 
@@ -48,10 +58,23 @@
             right: 30px;
             top: 30px;
             cursor: pointer;
+            z-index: 100;
         }
 
-        img {
-            object-fit: scale-down;
+        // https://css-tricks.com/can-get-pretty-far-making-slider-just-html-css/
+        .images {
+            overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            display: flex;
+            overflow-x: auto;
+            .image {
+                flex: 0 0 auto;
+                scroll-snap-align: start;
+                img {
+                    object-fit: scale-down;
+                    width: 100vw;
+                }
+            }
         }
     }
 </style>
