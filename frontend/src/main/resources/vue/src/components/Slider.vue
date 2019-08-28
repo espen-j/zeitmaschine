@@ -5,14 +5,13 @@
         </nav>
         <div class="images">
             <div class="image">
-                <span v-next></span><span v-prev></span>
-                <img ref="image" :src="src">
+                <img ref="image" :src="src" v-next>
             </div>
             <div class="image">
-                <img ref="image" :src="src">
+                <img ref="image" :src="src" v-next>
             </div>
             <div class="image">
-                <img ref="image" :src="src">
+                <img ref="image" :src="src" v-next>
             </div>
         </div>
     </div>
@@ -23,7 +22,27 @@
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
 
-    @Component
+    @Component({
+        directives: {
+            next: el => {
+                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+                    entries.forEach(entry => {
+                        //console.info(entry);
+
+                        if (entry.isIntersecting) {
+                            observer.unobserve(el);
+
+                            // FIXME always called twice..
+                            console.info(entry);
+                            // TODO load next and previous
+
+                        }
+                    });
+                };
+                new IntersectionObserver(callback).observe(el);
+            }
+        }
+    })
     export default class Slider extends Vue {
 
         @Prop()
@@ -60,6 +79,7 @@
             height: 50px;
             display: flex;
             flex-direction: column;
+
             .close-button {
                 align-self: flex-end;
                 cursor: pointer;
@@ -75,23 +95,23 @@
             scroll-snap-type: x mandatory;
             display: flex;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
+            overflow-y: hidden;
 
+            scrollbar-width: none; /* Firefox */
             &::-webkit-scrollbar { /* WebKit */
-            width: 0;
-            height: 0;
-        }
+                width: 0;
+                height: 0;
+            }
 
             .image {
-                flex: 0 0 auto;
                 scroll-snap-align: start;
-                width: 100vw;
 
                 img {
-                    display:block;
-                    margin:auto;
-                    height: 100%;
+                    max-height: 100%;
+                    max-width: 100vw;
                     object-fit: scale-down;
+                    // https://css-tricks.com/almanac/properties/t/touch-action/
+                    touch-action: pinch-zoom;
                 }
             }
         }
