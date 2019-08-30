@@ -105,6 +105,8 @@
 
             .image {
                 scroll-snap-align: start;
+                width: 100vw;
+
 
                 img {
                     max-height: 100%;

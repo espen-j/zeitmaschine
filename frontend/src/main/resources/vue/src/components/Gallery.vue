@@ -46,14 +46,12 @@
     })
     export default class Gallery extends Vue {
 
-        private images: Image[] = [];
         private selected?: Image;
         private sliderVisible: boolean = false;
 
         protected created() {
-            imageService.getImages()
-                .then(response => this.images = response.data)
-                .catch(reason => console.log('Failed', reason));
+
+            this.$store.dispatch('loadImages');
 
             this.registerScrollHandler();
         }
@@ -86,10 +84,11 @@
         }
 
         private load() {
-            console.log('loading.. ');
-            imageService.getImages(this.images.length)
-                .then(response => this.images.push(...response.data))
-                .catch(reason => console.log('Failed', reason));
+            this.$store.dispatch('loadImages');
+        }
+
+        get images(): Image[] {
+            return this.$store.state.images;
         }
     }
 
