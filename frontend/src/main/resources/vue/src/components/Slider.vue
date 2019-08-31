@@ -137,6 +137,16 @@
                 scroll-snap-align: start;
                 text-align: center;
                 flex: 0 0 100%;
+                height:100%;
+                white-space: nowrap;
+
+                // https://stackoverflow.com/questions/7273338/how-to-vertically-align-an-image-inside-a-div
+                &:before {
+                    content: "";
+                    display: inline-block;
+                    height: 100%;
+                    vertical-align: middle;
+                }
 
                 img {
                     max-height: 100%;
@@ -144,6 +154,8 @@
                     object-fit: scale-down;
                     // https://css-tricks.com/almanac/properties/t/touch-action/
                     touch-action: pinch-zoom;
+                    vertical-align: middle;
+
                 }
             }
         }
