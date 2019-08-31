@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from 'vue-property-decorator';
+    import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import debounce from 'lodash.debounce';
@@ -89,6 +89,11 @@
 
         get images(): Image[] {
             return this.$store.state.images;
+        }
+
+        @Watch('sliderVisible')
+        onPropertyChanged(value: string) {
+            document.body.style.overflow = value ? 'hidden' : ''
         }
     }
 
