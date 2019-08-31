@@ -126,6 +126,7 @@
             display: flex;
             overflow-x: auto;
             overflow-y: hidden;
+            height: 100%;
 
             scrollbar-width: none; /* Firefox */
             &::-webkit-scrollbar { /* WebKit */
@@ -135,18 +136,14 @@
 
             .image {
                 scroll-snap-align: start;
-                text-align: center;
-                flex: 0 0 100%;
-                height:100%;
-                white-space: nowrap;
 
-                // https://stackoverflow.com/questions/7273338/how-to-vertically-align-an-image-inside-a-div
-                &:before {
-                    content: "";
-                    display: inline-block;
-                    height: 100%;
-                    vertical-align: middle;
-                }
+                // stretch all elements to fill the width
+                flex: 0 0 100%;
+
+                // vertically align image
+                display: flex;
+                align-items: center;
+                justify-content: center;
 
                 img {
                     max-height: 100%;
@@ -154,8 +151,6 @@
                     object-fit: scale-down;
                     // https://css-tricks.com/almanac/properties/t/touch-action/
                     touch-action: pinch-zoom;
-                    vertical-align: middle;
-
                 }
             }
         }
