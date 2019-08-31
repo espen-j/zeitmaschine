@@ -1,10 +1,10 @@
 <template>
     <div class="container">
-        <div class="cell" v-for="image in images">
-            <img v-lazyload :data-image="image.name" v-on:click="open(image)"/>
+        <div class="cell" v-for="(image, index) in images">
+            <img v-lazyload :data-image="image.name" v-on:click="open(index)"/>
         </div>
         <span></span>
-        <Slider v-if="sliderVisible" @close="closeSlider" :image="selected"/>
+        <Slider v-if="sliderVisible" @close="closeSlider" :index="selected"/>
     </div>
 </template>
 
@@ -46,7 +46,7 @@
     })
     export default class Gallery extends Vue {
 
-        private selected?: Image;
+        private selected?: number;
         private sliderVisible: boolean = false;
 
         protected created() {
@@ -56,10 +56,10 @@
             this.registerScrollHandler();
         }
 
-        protected open(image: Image) {
-            this.selected = image;
+        protected open(selected: number) {
+            this.selected = selected;
             this.sliderVisible = true;
-            console.info(image);
+            console.info(this.selected);
         }
 
         protected closeSlider() {

@@ -4,14 +4,8 @@
             <div class="close-button" v-on:click="close()">X</div>
         </nav>
         <div class="images">
-            <div class="image">
-                <img ref="image" :src="src" v-next>
-            </div>
-            <div class="image">
-                <img ref="image" :src="src" v-next>
-            </div>
-            <div class="image">
-                <img ref="image" :src="src" v-next>
+            <div class="image" v-for="slide in slides">
+                <img :src="slide.src" :ref="slide.image.name" v-next="loadNext" :data-index="slide.index">
             </div>
         </div>
     </div>
@@ -24,18 +18,22 @@
 
     @Component({
         directives: {
-            next: el => {
+            next: (el, binding) => {
+
                 const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
                     entries.forEach(entry => {
                         //console.info(entry);
 
                         if (entry.isIntersecting) {
                             observer.unobserve(el);
+                            if (binding.value instanceof Function) {
+                                let loadNext = binding.value;
+                                let index = el.dataset.index;
+                                loadNext(index);
+                            }
 
-                            // FIXME always called twice..
-                            console.info(entry);
-                            // TODO load next and previous
-
+                            // FIXME always called several times. Runs ones during registration of observer
+                            // console.info(entry);
                         }
                     });
                 };
@@ -46,19 +44,52 @@
     export default class Slider extends Vue {
 
         @Prop()
-        protected image!: Image;
-        private src: string = '';
+        protected index!: number;
+        private slides: ImageRendition[] = [];
 
         protected close() {
             this.$emit('close');
         }
 
         protected created() {
-            return imageService.getImage(this.image.name, 'small')
+            let current: Image = this.$store.state.images[this.index];
+            imageService.getImage(current.name, 'small')
                 .then(blob => URL.createObjectURL(blob))
-                .then(src => this.src = src)
+                .then(src => this.slides.push({
+                    image: current,
+                    src: src,
+                    index: this.index
+                }))
                 .catch(e => console.log(e));
         }
+
+        loadNext(index: number) {
+            index++;
+            let slide = this.slides.find(slide => slide.index === index);
+            if (slide) {
+                console.log("ignoring ", index);
+                return;
+            }
+            let next: Image = this.$store.state.images[index];
+
+            imageService.getImage(next.name, 'small')
+                .then(blob => URL.createObjectURL(blob))
+                .then(src => this.slides.push({
+                    image: next,
+                    src: src,
+                    index: index
+                }))
+                .then()
+                .catch(e => console.log(e));
+        }
+
+
+    }
+
+    interface ImageRendition {
+        image: Image
+        src: string
+        index: number
     }
 </script>
 
@@ -73,7 +104,6 @@
         background-color: white;
         display: flex;
         flex-direction: column;
-        //flex: 0 0 auto;
 
         nav {
             height: 50px;
@@ -105,8 +135,8 @@
 
             .image {
                 scroll-snap-align: start;
-                width: 100vw;
-
+                text-align: center;
+                flex: 0 0 100%;
 
                 img {
                     max-height: 100%;
