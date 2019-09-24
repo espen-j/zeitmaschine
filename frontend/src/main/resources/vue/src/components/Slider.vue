@@ -122,6 +122,10 @@
         // https://css-tricks.com/can-get-pretty-far-making-slider-just-html-css/
         .images {
             overflow-scrolling: touch;
+
+            // ios fix
+            -webkit-overflow-scrolling: touch;
+
             scroll-snap-type: x mandatory;
             display: flex;
             overflow-x: auto;
