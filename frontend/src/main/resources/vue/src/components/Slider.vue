@@ -149,8 +149,6 @@
                     max-height: 100%;
                     max-width: 100vw;
                     object-fit: scale-down;
-                    // https://css-tricks.com/almanac/properties/t/touch-action/
-                    touch-action: pinch-zoom;
                 }
             }
         }
