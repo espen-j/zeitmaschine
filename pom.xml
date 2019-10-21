@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.1.5.RELEASE</version>
+    <version>2.2.0.RELEASE</version>
     <relativePath/>
   </parent>
 
@@ -21,6 +21,7 @@
     <java.version>8</java.version>
     <minio.version>6.0.7</minio.version>
     <auth0-spring-security.version>1.2.3</auth0-spring-security.version>
+    <spring-cloud.version>Hoxton.M3</spring-cloud.version>
   </properties>
 
   <modules>
@@ -42,11 +43,7 @@
         <version>${project.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>com.auth0</groupId>
-        <artifactId>auth0-spring-security-api</artifactId>
-        <version>${auth0-spring-security.version}</version>
-      </dependency>
+
 
       <dependency>
         <groupId>io.minio</groupId>
@@ -62,7 +59,7 @@
       <dependency>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
-        <version>Greenwich.SR1</version>
+        <version>${spring-cloud.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -77,5 +74,14 @@
     </dependencies>
 
   </dependencyManagement>
-
+  <repositories>
+    <repository>
+      <id>spring-milestones</id>
+      <name>Spring Milestones</name>
+      <url>https://repo.spring.io/milestone</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 </project>

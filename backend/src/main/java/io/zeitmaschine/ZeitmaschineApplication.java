@@ -27,8 +27,8 @@ public class ZeitmaschineApplication {
     public RouterFunction<ServerResponse> routes() {
         // https://github.com/spring-projects/spring-boot/issues/9785
         return route(
-                GET("/").and(accept(TEXT_HTML)), request -> ServerResponse.ok().syncBody(indexHtml))
-                .andRoute(GET("/callback").and(accept(TEXT_HTML)), request -> ServerResponse.ok().syncBody(indexHtml));
+                GET("/").and(accept(TEXT_HTML)), request -> ServerResponse.ok().bodyValue(indexHtml))
+                .andRoute(GET("/callback").and(accept(TEXT_HTML)), request -> ServerResponse.ok().bodyValue(indexHtml));
     }
 
     @Bean

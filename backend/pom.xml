@@ -50,10 +50,6 @@
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-resource-server</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.auth0</groupId>
-      <artifactId>auth0-spring-security-api</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>io.minio</groupId>
@@ -86,12 +82,7 @@
       <version>5.3.1</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>5.3.1</version>
-      <scope>test</scope>
-    </dependency>
+
     <!-- Test dependencies for benchmarking scaling -->
     <dependency>
       <groupId>com.twelvemonkeys.imageio</groupId>
