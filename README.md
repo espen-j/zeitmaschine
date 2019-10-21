@@ -24,7 +24,7 @@ Until then we need to extract the config from the running instance, update the f
 export ZM_CONFIG_DIR=/Users/espen/development/minio/zm-dev/config
 export ZM_ACCESS_KEY=test
 export ZM_ACCESS_SECRET=testtest
-export ZM_DOCKER_NAME=zm-dev
+export ZM_DOCKER_NAME=zm-minio
 export ZM_DOCKER_HOST=http://127.0.0.1:9000
 export ZM_WEBHOOK_ENDPOINT=http://host.docker.internal:8080/s3/webhook
 export ZM_NAME=zm-dev
@@ -33,7 +33,7 @@ export ZM_NAME=zm-dev
 mc config host add $ZM_NAME $ZM_DOCKER_HOST $ZM_ACCESS_KEY $ZM_ACCESS_SECRET
 
 # https://stackoverflow.com/questions/40027395/passing-bash-variable-to-jq-select
-mc admin config get $ZM_DOCKER_NAME | jq '.notify.webhook."1".enable = true' | jq --arg ZM_WEBHOOK_ENDPOINT "$ZM_WEBHOOK_ENDPOINT" '.notify.webhook."1".endpoint=$ZM_WEBHOOK_ENDPOINT' > $ZM_CONFIG_DIR/config.json
+mc admin config get $ZM_NAME | jq '.notify.webhook."1".enable = true' | jq --arg ZM_WEBHOOK_ENDPOINT "$ZM_WEBHOOK_ENDPOINT" '.notify.webhook."1".endpoint=$ZM_WEBHOOK_ENDPOINT' > $ZM_CONFIG_DIR/config.json
 mc admin config set $ZM_NAME < $ZM_CONFIG_DIR/config.json
 
 docker restart $ZM_DOCKER_NAME
