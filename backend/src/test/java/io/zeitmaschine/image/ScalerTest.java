@@ -24,7 +24,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,9 +127,9 @@ class ScalerTest {
 
     @ParameterizedTest
     @ArgumentsSource(TestImages.class)
-    void laszlo(TestImage image) throws IOException {
+    void lanczos(TestImage image) throws IOException {
 
-        Path output = outputDirectory.resolve("laszlo_" + image.original);
+        Path output = outputDirectory.resolve("lanczos_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
@@ -142,18 +141,18 @@ class ScalerTest {
         long after = System.currentTimeMillis();
 
         long time = after - before;
-        System.out.println("Laszlo took ms: " + time);
+        System.out.println("lanczos took ms: " + time);
 
         ImageIO.write(oImage, "jpg", output.toFile());
     }
 
     @ParameterizedTest
     @ArgumentsSource(TestImages.class)
-    void laszloOriented(TestImage image) throws IOException, ImageProcessingException, MetadataException {
+    void lanczosOriented(TestImage image) throws IOException, ImageProcessingException, MetadataException {
 
         String oName = "IMG_20181001_185137.jpg";
 
-        Path output = outputDirectory.resolve("laszloOriented_" + oName);
+        Path output = outputDirectory.resolve("lanczosOriented_" + oName);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
@@ -183,7 +182,7 @@ class ScalerTest {
         long after = System.currentTimeMillis();
 
         long time = after - before;
-        System.out.println("Laszlo took ms: " + time);
+        System.out.println("lanczos took ms: " + time);
 
         ImageIO.write(oImage, "jpg", output.toFile());
     }
