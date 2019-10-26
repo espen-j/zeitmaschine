@@ -11,166 +11,145 @@ import com.twelvemonkeys.image.ResampleOp;
 import org.imgscalr.Scalr;
 import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 @Ignore("Only for benchmarking purposes")
 class ScalerTest {
 
     private Path outputDirectory;
-    private BufferedImage input;
-    private String originalImage;
-
-    private int width = Dimension.SMALL.getSize();
-    private int height = Dimension.SMALL.getSize();
-
-    private String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg"};
+    private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
     @BeforeEach
     void setUp() throws Exception {
-        this.originalImage = "IMG_20181001_185137.jpg";
-        InputStream stream = ClassLoader.getSystemResourceAsStream("images/" + originalImage);
 
-        this.input = ImageIO.read(stream);
-
-        int imgWidth = input.getWidth();
-        int imgHeight = input.getHeight();
-
-
-
-        if (imgWidth * height < imgHeight * width) {
-            width = imgWidth * height / imgHeight;
-        } else {
-            height = imgHeight * width / imgWidth;
-        }
-
-        outputDirectory = Paths.get("/Users/espen/temp/image-test");
-        if(!Files.exists(outputDirectory)) {
+        this.outputDirectory = Paths.get("/Users/espen/temp/image-test");
+        if (!Files.exists(outputDirectory)) {
             Files.createDirectory(outputDirectory);
         }
     }
 
-    @Test
-    void basic() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void basic(TestImage image) throws IOException {
 
-        Path output = outputDirectory.resolve("basic_" + originalImage);
+        Path output = outputDirectory.resolve("basic_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
-
         long before = System.currentTimeMillis();
 
-        BufferedImage image = basic(input, width, height);
+        BufferedImage oImage = basic(image.image, image.width, image.height);
         long after = System.currentTimeMillis();
 
         long time = after - before;
 
         System.out.println("basic took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
     }
 
-    @Test
-    void twelve() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void twelve(TestImage image) throws IOException {
 
-        String oName = "IMG_20180614_214734.jpg";
 
-        Path output = outputDirectory.resolve("twelve_" + oName);
+        Path output = outputDirectory.resolve("twelve_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
 
         long before = System.currentTimeMillis();
 
-        BufferedImageOp resampler = new ResampleOp(width, height, ResampleOp.FILTER_LANCZOS); // A good default filter, see class documentation for more info
-        BufferedImage image = resampler.filter(input, null);
+        BufferedImageOp resampler = new ResampleOp(image.width, image.height, ResampleOp.FILTER_LANCZOS); // A good default filter, see class documentation for more info
+        BufferedImage oImage = resampler.filter(image.image, null);
 
         long after = System.currentTimeMillis();
 
         long time = after - before;
         System.out.println("Twelve took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
     }
 
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void progressive(TestImage image) throws IOException {
 
-    @Test
-    void progressive() throws IOException {
-
-        String oName = "IMG_20181001_185137.jpg";
-
-        Path output = outputDirectory.resolve("progressive_" + oName);
+        Path output = outputDirectory.resolve("progressive_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
 
         long before = System.currentTimeMillis();
-        BufferedImage image = progressiveScaling(input, width, height);
+        BufferedImage oImage = progressiveScaling(image.image, image.width, image.height);
         long after = System.currentTimeMillis();
 
         long time = after - before;
         System.out.println("Progressive took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
     }
 
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void scalrProgressive(TestImage image) throws IOException {
 
-    @Test
-    void scalrProgressive() throws IOException {
-
-        String oName = "IMG_20181001_185137.jpg";
-
-        Path output = outputDirectory.resolve("scalr_progressive_" + oName);
+        Path output = outputDirectory.resolve("scalr_progressive_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
 
         long before = System.currentTimeMillis();
-        BufferedImage image = Scalr.resize(input, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_EXACT, width, height);
+        BufferedImage oImage = Scalr.resize(image.image, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_EXACT,image.width, image.height);
         long after = System.currentTimeMillis();
 
         long time = after - before;
         System.out.println("Scalr Progressive took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
     }
 
-    @Test
-    void laszlo() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void laszlo(TestImage image) throws IOException {
 
-        String oName = "IMG_20180614_214734.jpg";
-
-        Path output = outputDirectory.resolve("laszlo_" + oName);
+        Path output = outputDirectory.resolve("laszlo_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
 
         long before = System.currentTimeMillis();
 
-        BufferedImage image = Scaler.scale(input, Dimension.SMALL);
+        BufferedImage oImage = Scaler.scale(image.image, Dimension.SMALL);
 
         long after = System.currentTimeMillis();
 
         long time = after - before;
         System.out.println("Laszlo took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
     }
 
-    @Test
-    void laszloOriented() throws IOException, ImageProcessingException, MetadataException {
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void laszloOriented(TestImage image) throws IOException, ImageProcessingException, MetadataException {
 
         String oName = "IMG_20181001_185137.jpg";
 
@@ -181,37 +160,60 @@ class ScalerTest {
 
         long before = System.currentTimeMillis();
 
-
-        Metadata metadata = ImageMetadataReader.readMetadata(ClassLoader.getSystemResourceAsStream("images/" + originalImage));
+        Metadata metadata = ImageMetadataReader.readMetadata(ClassLoader.getSystemResourceAsStream("images/" + image.original));
 
         // original an thumbnail?
         Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
 
-        int imgHeight = input.getHeight();
-        int imgWidth = input.getWidth();
-        int orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
-        if (orientation > 1) {
-            AffineTransform operation = getExifTransformation(imgHeight, imgWidth, orientation);
-            this.input = transformImage(input, operation);
-            imgWidth = input.getWidth();
-            imgHeight = input.getHeight();
+        if (directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+            int orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+            if (orientation > 1) {
+                AffineTransform operation = getExifTransformation(image.image.getHeight(), image.image.getWidth(), orientation);
+                BufferedImage tImage = transformImage(image.image, operation);
+
+                // assignments not really needed, except for reference to new image
+                image.width = tImage.getWidth();
+                image.height = tImage.getHeight();
+                image.image = tImage;
+            }
         }
 
-
-        if (imgWidth * height < imgHeight * width) {
-            width = imgWidth * height / imgHeight;
-        } else {
-            height = imgHeight * width / imgWidth;
-        }
-
-        BufferedImage image = Scaler.scale(input, Dimension.SMALL);
+        BufferedImage oImage = Scaler.scale(image.image, Dimension.SMALL);
 
         long after = System.currentTimeMillis();
 
         long time = after - before;
-        System.out.println("LaszloOriented took ms: " + time);
+        System.out.println("Laszlo took ms: " + time);
 
-        ImageIO.write(image, "jpg", output.toFile());
+        ImageIO.write(oImage, "jpg", output.toFile());
+    }
+
+    private static TestImage loadImage(String imageName) throws RuntimeException {
+        int width = Dimension.SMALL.getSize();
+        int height = Dimension.SMALL.getSize();
+
+        InputStream stream = ClassLoader.getSystemResourceAsStream("images/" + imageName);
+
+        try {
+            BufferedImage image = ImageIO.read(stream);
+            int imgWidth = image.getWidth();
+            int imgHeight = image.getHeight();
+
+            // set height or width to ficed size and recalculate the other
+            if (imgWidth * height < imgHeight * width) {
+                width = imgWidth * height / imgHeight;
+            } else {
+                height = imgHeight * width / imgWidth;
+            }
+            TestImage test = new TestImage();
+            test.original = imageName;
+            test.width = width;
+            test.height = height;
+            test.image = image;
+            return test;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -266,7 +268,7 @@ class ScalerTest {
     }
 
     // Look at http://chunter.tistory.com/143 for information
-    public static AffineTransform getExifTransformation(int height, int width, int orientation) {
+    private static AffineTransform getExifTransformation(int height, int width, int orientation) {
 
         AffineTransform t = new AffineTransform();
 
@@ -297,27 +299,41 @@ class ScalerTest {
                 t.scale(-1.0, 1.0);
                 t.translate(-height, 0);
                 t.translate(0, width);
-                t.rotate(  3 * Math.PI / 2);
+                t.rotate(3 * Math.PI / 2);
                 break;
             case 8: // PI / 2
                 t.translate(0, width);
-                t.rotate(  3 * Math.PI / 2);
+                t.rotate(3 * Math.PI / 2);
                 break;
         }
 
         return t;
     }
 
-    public static BufferedImage transformImage(BufferedImage image, AffineTransform transform) {
+    private static BufferedImage transformImage(BufferedImage image, AffineTransform transform) {
 
         AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
 
         // Create an instance of the resulting image, with the same width, height and image type than the referenced one
         // TODO that's not true, need to switch the widthor height based e.g. for 90 degrees rotation (case 6)
-        BufferedImage destinationImage = new BufferedImage( image.getHeight(), image.getWidth(), image.getType() );
+        BufferedImage destinationImage = new BufferedImage(image.getHeight(), image.getWidth(), image.getType());
         op.filter(image, destinationImage);
 
         // Set the created image as new buffered image
         return destinationImage;
+    }
+
+    private static class TestImage {
+        private BufferedImage image;
+        private String original;
+        private int width;
+        private int height;
+    }
+
+    private static class TestImages implements ArgumentsProvider {
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
+            return Stream.of(images).map(image -> loadImage(image)).map(Arguments::of);
+        }
     }
 }
