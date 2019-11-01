@@ -8,6 +8,13 @@ import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.twelvemonkeys.image.AffineTransformOp;
 import com.twelvemonkeys.image.ResampleOp;
+import com.twelvemonkeys.imageio.metadata.CompoundDirectory;
+import com.twelvemonkeys.imageio.metadata.Entry;
+import com.twelvemonkeys.imageio.metadata.jpeg.JPEG;
+import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegment;
+import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegmentUtil;
+import com.twelvemonkeys.imageio.metadata.tiff.TIFF;
+import com.twelvemonkeys.imageio.metadata.tiff.TIFFWriter;
 import org.imgscalr.Scalr;
 import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +25,10 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -27,7 +37,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Ignore("Only for benchmarking purposes")
 class ScalerTest {
@@ -150,9 +163,7 @@ class ScalerTest {
     @ArgumentsSource(TestImages.class)
     void lanczosOriented(TestImage image) throws IOException, ImageProcessingException, MetadataException {
 
-        String oName = "IMG_20181001_185137.jpg";
-
-        Path output = outputDirectory.resolve("lanczosOriented_" + oName);
+        Path output = outputDirectory.resolve("lanczosOriented_" + image.original);
         if (!Files.exists(output)) {
             output = Files.createFile(output);
         }
@@ -185,6 +196,48 @@ class ScalerTest {
         System.out.println("lanczos took ms: " + time);
 
         ImageIO.write(oImage, "jpg", output.toFile());
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(TestImages.class)
+    void lanczosExif(TestImage image) throws IOException {
+
+        Path output = outputDirectory.resolve("lanczos_exif_" + image.original);
+        if (!Files.exists(output)) {
+            output = Files.createFile(output);
+        }
+
+        long before = System.currentTimeMillis();
+
+
+        InputStream iStream = ClassLoader.getSystemResourceAsStream("images/" + image.original);
+
+        List<JPEGSegment> exifSegment = JPEGSegmentUtil.readSegments(ImageIO.createImageInputStream(iStream), JPEG.APP1, "Exif");
+        InputStream exifData = exifSegment.get(0).data();
+        exifData.read(); // Skip 0-pad for Exif in JFIF
+
+        CompoundDirectory exif = (CompoundDirectory) new com.twelvemonkeys.imageio.metadata.tiff.TIFFReader().read(ImageIO.createImageInputStream(exifData));
+
+        // orientation is set for image an thumbnail!
+        // TIFFEntry type = 3, identifier 274, value = 6
+        // TODO get value 6 and write it back to newly created image
+        // https://github.com/haraldk/TwelveMonkeys/issues/95
+
+        List<Entry> entries = StreamSupport.stream(exif.spliterator(), false)
+                .filter(entry -> entry.getIdentifier().equals(TIFF.TAG_ORIENTATION))
+                .collect(Collectors.toList());
+
+        ImageOutputStream imageOutputStream = ImageIO.createImageOutputStream(Files.newOutputStream(output));
+        new TIFFWriter().write(entries, imageOutputStream); // write tiff data
+        BufferedImage oImage = Scaler.scale(image.image, Dimension.SMALL);
+
+        long after = System.currentTimeMillis();
+
+        long time = after - before;
+        System.out.println("lanczos took ms: " + time);
+
+        ImageIO.write(oImage, "jpg", imageOutputStream);
+
     }
 
     private static TestImage loadImage(String imageName) throws RuntimeException {
