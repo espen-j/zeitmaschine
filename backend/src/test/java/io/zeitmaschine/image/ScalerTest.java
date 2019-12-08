@@ -14,7 +14,6 @@ import com.twelvemonkeys.imageio.metadata.jpeg.JPEG;
 import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegment;
 import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegmentUtil;
 import com.twelvemonkeys.imageio.metadata.tiff.TIFF;
-import com.twelvemonkeys.imageio.metadata.tiff.TIFFWriter;
 import org.imgscalr.Scalr;
 import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -32,11 +38,13 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -227,8 +235,7 @@ class ScalerTest {
                 .filter(entry -> entry.getIdentifier().equals(TIFF.TAG_ORIENTATION))
                 .collect(Collectors.toList());
 
-        ImageOutputStream imageOutputStream = ImageIO.createImageOutputStream(Files.newOutputStream(output));
-        new TIFFWriter().write(entries, imageOutputStream); // write tiff data
+
         BufferedImage oImage = Scaler.scale(image.image, Dimension.SMALL);
 
         long after = System.currentTimeMillis();
@@ -236,9 +243,65 @@ class ScalerTest {
         long time = after - before;
         System.out.println("lanczos took ms: " + time);
 
-        ImageIO.write(oImage, "jpg", imageOutputStream);
+        writeImage(output.toFile(), oImage, createMetadata());
 
     }
+
+    private static void writeImage(File outputFile, BufferedImage image, IIOMetadataNode newMetadata) throws IOException
+    {
+        String extension = "jpg";
+        ImageTypeSpecifier imageType = ImageTypeSpecifier.createFromBufferedImageType(image.getType());
+
+        ImageOutputStream stream = null;
+        try
+        {
+            Iterator<ImageWriter> writers = ImageIO.getImageWritersBySuffix(extension);
+            while(writers.hasNext())
+            {
+                ImageWriter writer = writers.next();
+                ImageWriteParam writeParam = writer.getDefaultWriteParam();
+                IIOMetadata imageMetadata = writer.getDefaultImageMetadata(imageType, writeParam);
+                if (!imageMetadata.isStandardMetadataFormatSupported())
+                {
+                    continue;
+                }
+                if (imageMetadata.isReadOnly())
+                {
+                    continue;
+                }
+
+                //imageMetadata.mergeTree(IIOMetadataFormatImpl.standardMetadataFormatName, newMetadata);
+
+                IIOImage imageWithMetadata = new IIOImage(image, null, imageMetadata);
+
+                stream = ImageIO.createImageOutputStream(outputFile);
+                writer.setOutput(stream);
+                writer.write(null, imageWithMetadata, writeParam);
+                break;
+            }
+        }
+        finally
+        {
+            if (stream != null)
+            {
+                stream.close();
+            }
+        }
+    }
+
+    private static IIOMetadataNode createMetadata()
+    {
+
+        IIOMetadataNode orientation = new IIOMetadataNode("Orientation");
+        orientation.setAttribute("value", "6");
+
+
+        IIOMetadataNode root = new IIOMetadataNode(IIOMetadataFormatImpl.standardMetadataFormatName);
+        root.appendChild(orientation);
+
+        return root;
+    }
+
 
     private static TestImage loadImage(String imageName) throws RuntimeException {
         int width = Dimension.SMALL.getSize();
