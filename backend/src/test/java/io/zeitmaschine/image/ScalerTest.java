@@ -8,12 +8,6 @@ import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.twelvemonkeys.image.AffineTransformOp;
 import com.twelvemonkeys.image.ResampleOp;
-import com.twelvemonkeys.imageio.metadata.CompoundDirectory;
-import com.twelvemonkeys.imageio.metadata.Entry;
-import com.twelvemonkeys.imageio.metadata.jpeg.JPEG;
-import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegment;
-import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegmentUtil;
-import com.twelvemonkeys.imageio.metadata.tiff.TIFF;
 import org.imgscalr.Scalr;
 import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,15 +16,21 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -45,10 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 @Ignore("Only for benchmarking purposes")
 class ScalerTest {
@@ -219,21 +216,20 @@ class ScalerTest {
 
 
         InputStream iStream = ClassLoader.getSystemResourceAsStream("images/" + image.original);
+        ImageInputStream stream = ImageIO.createImageInputStream(iStream);
 
-        List<JPEGSegment> exifSegment = JPEGSegmentUtil.readSegments(ImageIO.createImageInputStream(iStream), JPEG.APP1, "Exif");
-        InputStream exifData = exifSegment.get(0).data();
-        exifData.read(); // Skip 0-pad for Exif in JFIF
+        Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
+        if (readers.hasNext())
+        {
+            ImageReader reader = readers.next();
+            reader.setInput(stream);
+            ImageReaderSpi spi = reader.getOriginatingProvider();
 
-        CompoundDirectory exif = (CompoundDirectory) new com.twelvemonkeys.imageio.metadata.tiff.TIFFReader().read(ImageIO.createImageInputStream(exifData));
-
-        // orientation is set for image an thumbnail!
-        // TIFFEntry type = 3, identifier 274, value = 6
-        // TODO get value 6 and write it back to newly created image
-        // https://github.com/haraldk/TwelveMonkeys/issues/95
-
-        List<Entry> entries = StreamSupport.stream(exif.spliterator(), false)
-                .filter(entry -> entry.getIdentifier().equals(TIFF.TAG_ORIENTATION))
-                .collect(Collectors.toList());
+            if (spi.isStandardImageMetadataFormatSupported())
+            {
+                processFileWithReader(image.original, reader);
+            }
+        }
 
 
         BufferedImage oImage = Scaler.scale(image.image, Dimension.SMALL);
@@ -244,6 +240,76 @@ class ScalerTest {
         System.out.println("lanczos took ms: " + time);
 
         writeImage(output.toFile(), oImage, createMetadata());
+
+    }
+
+    private static void processFileWithReader(String file, ImageReader reader) throws IOException
+    {
+        ImageInputStream stream = null;
+
+        try
+        {
+
+            InputStream iStream = ClassLoader.getSystemResourceAsStream("images/" + file);
+            stream = ImageIO.createImageInputStream(iStream);
+
+            reader.setInput(stream, true);
+
+            IIOMetadata metadata = reader.getImageMetadata(0);
+
+            Node root = metadata.getAsTree(IIOMetadataFormatImpl.standardMetadataFormatName);
+            Node dimension = getChildElement(root, "Dimension");
+            if (dimension != null) {
+                Node orientation = getChildElement(dimension, "ImageOrientation");
+                orientation.getAttributes();
+
+            }
+            dumpTreeStructure(root);
+        }
+        finally
+        {
+            if (stream != null)
+            {
+                stream.close();
+            }
+        }
+    }
+
+
+    private static Element getChildElement(Node parent, String name)
+    {
+        NodeList children = parent.getChildNodes();
+        int count = children.getLength();
+        for (int i = 0; i < count; i++)
+        {
+            Node child = children.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE)
+            {
+                if (child.getNodeName().equals(name))
+                {
+                    return (Element)child;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static void dumpTreeStructure(Node parent)
+    {
+        NodeList children = parent.getChildNodes();
+        int count = children.getLength();
+        for (int i = 0; i < count; i++)
+        {
+            Node child = children.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE)
+            {
+                System.out.println(parent.getNodeName() + " -> " + child.getNodeName());
+                if (child.hasChildNodes()) {
+                    dumpTreeStructure(child);
+                }
+            }
+        }
 
     }
 
