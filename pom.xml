@@ -18,7 +18,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>8</java.version>
+    <java.version>13</java.version>
     <minio.version>6.0.7</minio.version>
     <auth0-spring-security.version>1.2.3</auth0-spring-security.version>
     <spring-cloud.version>Hoxton.M3</spring-cloud.version>
