@@ -13,19 +13,17 @@ import io.minio.messages.Filter;
 import io.minio.messages.Item;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
-import io.zeitmaschine.image.Scaler;
+import io.zeitmaschine.image.Dimension;
+import io.zeitmaschine.image.ImagingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import io.zeitmaschine.image.Dimension;
 
 import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.LinkedList;
@@ -47,6 +45,7 @@ public class S3Repository {
     private final boolean webhook;
 
     private MinioClient minioClient;
+    private ImagingService imagingService = new ImagingService();
 
     @Autowired
     public S3Repository(S3Config config) {
@@ -128,35 +127,27 @@ public class S3Repository {
 
     }
 
-    public byte[] getImageAsData(String key, Dimension dimension) throws Exception {
+    public Resource getImageAsResource(String key, Dimension dimension) throws Exception {
 
-        Optional<BufferedImage> cached = loadCached(key, dimension);
+        Optional<Resource> cached = loadCached(key, dimension);
 
         if (cached.isPresent()) {
-            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                ImageIO.write(cached.get(), "jpg", os);
-                return os.toByteArray();
-            }
+            return cached.get();
         } else {
-            try (InputStream object = minioClient.getObject(BUCKET_NAME, key);
-                 ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
 
-                BufferedImage image = Scaler.scale(ImageIO.read(object), dimension);
-
-                ImageIO.write(image, "jpg", os);
-
-                byte[] bytes = os.toByteArray();
-                cache(key, bytes, dimension);
-                return bytes;
+                return imagingService.resize(new InputStreamResource(object), dimension)
+                        .doOnSuccess(bytes -> cache(key, bytes, dimension))
+                        .block();
             }
         }
     }
 
-    private void cache(String key, byte[] thumbnail, Dimension dimension) {
-        try (InputStream stream = new ByteArrayInputStream(thumbnail)) {
-            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key, dimension), stream, MediaType.IMAGE_JPEG_VALUE);
+    private void cache(String key, Resource thumbnail, Dimension dimension) {
+        try {
+            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key, dimension), thumbnail.getInputStream(), MediaType.IMAGE_JPEG_VALUE);
         } catch (Exception e) {
-            log.error("Failed to cache scaled image.", e);
+            log.error("Failed to store scaled image to cache.", e);
         }
     }
 
@@ -164,9 +155,9 @@ public class S3Repository {
         return Paths.get(dimension.name(), key).toString();
     }
 
-    private Optional<BufferedImage> loadCached(String key, Dimension dimension) {
+    private Optional<Resource> loadCached(String key, Dimension dimension) {
         try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key, dimension))) {
-            return Optional.of(ImageIO.read(object));
+            return Optional.of(new InputStreamResource(object));
         } catch (Exception e) {
             log.info("Failed to fetch cached thumbnail.");
         }

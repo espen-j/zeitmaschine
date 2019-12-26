@@ -3,7 +3,7 @@ package io.zeitmaschine.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,13 +28,13 @@ public class ImageEndpoint {
     }
 
     @GetMapping(value = "/{dimension}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public Mono<ByteArrayResource> image(@PathVariable String dimension, @RequestParam String name) {
+    public Mono<Resource> image(@PathVariable String dimension, @RequestParam String name) {
 
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
         try {
-            byte[] data = repository.getImageAsData(name, Dimension.valueOf(dimension.toUpperCase()));
-            return Mono.just(new ByteArrayResource(data));
+            Resource data = repository.getImageAsResource(name, Dimension.valueOf(dimension.toUpperCase()));
+            return Mono.just(data);
         } catch (Exception e) {
             return Mono.error(e);
         }
