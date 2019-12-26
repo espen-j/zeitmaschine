@@ -6,6 +6,7 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import io.minio.MinioClient;
+import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
 import io.minio.messages.EventType;
@@ -93,7 +94,7 @@ public class S3Repository {
     /**
      * Enables notifications over webhook for the bucket. The endpoint to be notified still needs to be set in
      * configuration.
-     * 
+     * <p>
      * see https://github.com/minio/minio-java/blob/master/examples/SetBucketNotification.java
      */
     private void enableWebHookNotification() throws Exception {
@@ -130,15 +131,10 @@ public class S3Repository {
 
     public Mono<Resource> getImageAsResource(String key, Dimension dimension) {
 
-        return loadCached(key, dimension).switchIfEmpty(Mono.defer(() -> {
-                    try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
-                        return imagingService.resize(new ByteArrayResource(object.readAllBytes()), dimension)
-                                .doOnSuccess(bytes -> cache(key, bytes, dimension));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-        ));
+        return loadCached(key, dimension).switchIfEmpty(Mono.defer(() ->
+                    fetchImage(BUCKET_NAME, key)
+                            .flatMap(res -> imagingService.resize(res, dimension))
+                            .doOnSuccess(res -> cache(key, res, dimension))));
 
     }
 
@@ -155,12 +151,7 @@ public class S3Repository {
     }
 
     private Mono<Resource> loadCached(String key, Dimension dimension) {
-        try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key, dimension))) {
-            return Mono.just(new ByteArrayResource(object.readAllBytes()));
-        } catch (Exception e) {
-            log.debug("No cached thumbnail for '{}'.", key);
-        }
-        return Mono.empty();
+        return fetchImage(BUCKET_CACHE_NAME, getThumbName(key, dimension));
     }
 
     public void getImages(Consumer<Image> indexer) {
@@ -202,5 +193,23 @@ public class S3Repository {
         } catch (Exception e) {
             throw new RuntimeException("Error fetching image.", e);
         }
+    }
+
+    private Mono<Resource> fetchImage(String bucket, String key) {
+        try (InputStream object = minioClient.getObject(bucket, key)) {
+            return Mono.just(new ByteArrayResource(object.readAllBytes()));
+        } catch (ErrorResponseException e) {
+            switch (e.errorResponse().errorCode()) {
+                case NO_SUCH_KEY:
+                case RESOURCE_NOT_FOUND:
+                    log.debug("No object found for '{}'.", key);
+                    return Mono.empty();
+                default:
+                    throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
+        }
+
     }
 }
