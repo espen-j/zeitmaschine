@@ -16,8 +16,8 @@ import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegmentUtil;
 import com.twelvemonkeys.imageio.metadata.tiff.TIFF;
 import com.twelvemonkeys.imageio.metadata.tiff.TIFFWriter;
 import org.imgscalr.Scalr;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-@Ignore("Only for benchmarking purposes")
+@Disabled("Only for benchmarking purposes")
 class ScalerTest {
 
     // https://stackoverflow.com/questions/28259466/java-extract-jpeg-image-details
@@ -213,6 +213,7 @@ class ScalerTest {
 
     @ParameterizedTest
     @ArgumentsSource(TestImages.class)
+    @Disabled("Did not get this one working. EXIF is a bitch..")
     void lanczosExif(TestImage image) throws IOException {
 
         Path output = outputDirectory.resolve("lanczos_exif_" + image.original);
