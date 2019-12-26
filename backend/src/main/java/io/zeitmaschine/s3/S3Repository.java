@@ -18,10 +18,11 @@ import io.zeitmaschine.image.ImagingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
@@ -92,7 +93,7 @@ public class S3Repository {
     /**
      * Enables notifications over webhook for the bucket. The endpoint to be notified still needs to be set in
      * configuration.
-     *
+     * 
      * see https://github.com/minio/minio-java/blob/master/examples/SetBucketNotification.java
      */
     private void enableWebHookNotification() throws Exception {
@@ -127,20 +128,18 @@ public class S3Repository {
 
     }
 
-    public Resource getImageAsResource(String key, Dimension dimension) throws Exception {
+    public Mono<Resource> getImageAsResource(String key, Dimension dimension) {
 
-        Optional<Resource> cached = loadCached(key, dimension);
+        return loadCached(key, dimension).switchIfEmpty(Mono.defer(() -> {
+                    try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
+                        return imagingService.resize(new ByteArrayResource(object.readAllBytes()), dimension)
+                                .doOnSuccess(bytes -> cache(key, bytes, dimension));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        ));
 
-        if (cached.isPresent()) {
-            return cached.get();
-        } else {
-            try (InputStream object = minioClient.getObject(BUCKET_NAME, key)) {
-
-                return imagingService.resize(new InputStreamResource(object), dimension)
-                        .doOnSuccess(bytes -> cache(key, bytes, dimension))
-                        .block();
-            }
-        }
     }
 
     private void cache(String key, Resource thumbnail, Dimension dimension) {
@@ -155,13 +154,13 @@ public class S3Repository {
         return Paths.get(dimension.name(), key).toString();
     }
 
-    private Optional<Resource> loadCached(String key, Dimension dimension) {
+    private Mono<Resource> loadCached(String key, Dimension dimension) {
         try (InputStream object = minioClient.getObject(BUCKET_CACHE_NAME, getThumbName(key, dimension))) {
-            return Optional.of(new InputStreamResource(object));
+            return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (Exception e) {
-            log.info("Failed to fetch cached thumbnail.");
+            log.debug("No cached thumbnail for '{}'.", key);
         }
-        return Optional.empty();
+        return Mono.empty();
     }
 
     public void getImages(Consumer<Image> indexer) {

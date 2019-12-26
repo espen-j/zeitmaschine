@@ -33,9 +33,9 @@ public class ImageEndpoint {
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
         try {
-            Resource data = repository.getImageAsResource(name, Dimension.valueOf(dimension.toUpperCase()));
-            return Mono.just(data);
+            return repository.getImageAsResource(name, Dimension.valueOf(dimension.toUpperCase()));
         } catch (Exception e) {
+            // TODO this leaks internals.
             return Mono.error(e);
         }
     }
