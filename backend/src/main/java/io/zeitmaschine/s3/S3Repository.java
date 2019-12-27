@@ -1,6 +1,7 @@
 package io.zeitmaschine.s3;
 
 import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
@@ -11,7 +12,6 @@ import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
 import io.minio.messages.EventType;
 import io.minio.messages.Filter;
-import io.minio.messages.Item;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
 import io.zeitmaschine.image.Dimension;
@@ -23,15 +23,16 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 @Service
 public class S3Repository {
@@ -132,9 +133,9 @@ public class S3Repository {
     public Mono<Resource> getImageAsResource(String key, Dimension dimension) {
 
         return loadCached(key, dimension).switchIfEmpty(Mono.defer(() ->
-                    fetchImage(BUCKET_NAME, key)
-                            .flatMap(res -> imagingService.resize(res, dimension))
-                            .doOnSuccess(res -> cache(key, res, dimension))));
+                fetchImage(BUCKET_NAME, key)
+                        .flatMap(res -> imagingService.resize(res, dimension))
+                        .doOnSuccess(res -> cache(key, res, dimension))));
 
     }
 
@@ -154,32 +155,35 @@ public class S3Repository {
         return fetchImage(BUCKET_CACHE_NAME, getThumbName(key, dimension));
     }
 
-    public void getImages(Consumer<Image> indexer) {
+    public Flux<Image> getImages() {
 
         try {
-            minioClient.listObjects(BUCKET_NAME).forEach(itemResult -> {
-                try {
-                    Item item = itemResult.get();
-                    String name = item.objectName();
-                    Image image = getImage(name);
-                    indexer.accept(image);
-                } catch (Exception e) {
-                    log.error("Failed to get item with name.", e);
-                }
-            });
+            return Flux.fromIterable(minioClient.listObjects(BUCKET_NAME))
+                    .map(itemResult -> {
+                        try {
+                            return itemResult.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .flatMap(item -> {
+                        String key = item.objectName();
+                        return fetchImage(BUCKET_NAME, key)
+                                .map(resource -> getImage(key, resource));
+                    });
         } catch (Exception e) {
             log.error("Error fetching all objects from s3: " + e);
+            return Flux.error(e);
         }
     }
 
-    public Image getImage(String name) {
+    public Image getImage(String key, Resource resource) {
 
         // FIXME contenttype not checked!
-        try (InputStream stream = minioClient.getObject(BUCKET_NAME, name)) {
-            Image.Builder builder = Image.from(name);
+        try {
+            Image.Builder builder = Image.from(key);
 
-            Metadata metadata = ImageMetadataReader.readMetadata(stream);
-
+            Metadata metadata = ImageMetadataReader.readMetadata(resource.getInputStream());
             Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
             subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
 
@@ -190,12 +194,12 @@ public class S3Repository {
                     builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
             });
             return builder.build();
-        } catch (Exception e) {
-            throw new RuntimeException("Error fetching image.", e);
+        } catch (IOException | ImageProcessingException e) {
+            throw new RuntimeException("Error reading metadata from image.", e);
         }
     }
 
-    private Mono<Resource> fetchImage(String bucket, String key) {
+    public Mono<Resource> fetchImage(String bucket, String key) {
         try (InputStream object = minioClient.getObject(bucket, key)) {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (ErrorResponseException e) {

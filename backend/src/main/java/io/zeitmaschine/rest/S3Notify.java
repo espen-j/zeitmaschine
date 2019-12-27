@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import io.zeitmaschine.index.Indexer;
 import io.zeitmaschine.s3.S3Repository;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -37,9 +38,10 @@ public class S3Notify {
 
         List<String> keys = JsonPath.read(json, "$.Records[*].s3.object.key");
 
-        keys.stream()
-                .map(key -> repository.getImage(key))
-                .forEach(image -> indexer.index(image));
+        Flux.fromIterable(keys)
+                .flatMap(key -> repository.fetchImage(S3Repository.BUCKET_NAME, key)
+                            .map(resource -> repository.getImage(key, resource)))
+                .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
 

@@ -85,6 +85,6 @@ public class Indexer {
         createIndex();
 
         // re-index
-        repository.getImages(image -> index(image));
+        repository.getImages().subscribe(image -> index(image));
     }
 }
