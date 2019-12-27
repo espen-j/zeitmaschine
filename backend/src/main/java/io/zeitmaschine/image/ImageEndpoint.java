@@ -1,7 +1,5 @@
-package io.zeitmaschine.rest;
+package io.zeitmaschine.image;
 
-import io.zeitmaschine.image.Dimension;
-import io.zeitmaschine.image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;

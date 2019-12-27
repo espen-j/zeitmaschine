@@ -175,6 +175,7 @@ public class S3Repository {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().errorCode()) {
+                case NO_SUCH_OBJECT:
                 case NO_SUCH_KEY:
                 case RESOURCE_NOT_FOUND:
                     log.debug("No object found for '{}'.", key);
