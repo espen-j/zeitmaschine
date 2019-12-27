@@ -1,34 +1,31 @@
-package io.zeitmaschine.rest;
+package io.zeitmaschine.index;
 
 import com.jayway.jsonpath.JsonPath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.zeitmaschine.s3.S3Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import io.zeitmaschine.index.Indexer;
-import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
 
 /**
- * S3 notify endpoint.
+ * Index endpoint for s3 to notify and trigger a manual reindexing.
+ *
+ * TODO Change endpoint /s3 -> /index: Needs minio (s3) webhook reconfiguration!
  */
 @RestController
 @RequestMapping("/s3")
-public class S3Notify {
-
-    private final static Logger log = LoggerFactory.getLogger(S3Notify.class.getName());
+public class IndexEndpoint {
 
     private S3Repository repository;
     private Indexer indexer;
 
     @Autowired
-    public S3Notify(S3Repository repository, Indexer indexer) {
+    public IndexEndpoint(S3Repository repository, Indexer indexer) {
         this.repository = repository;
         this.indexer = indexer;
     }
@@ -40,7 +37,7 @@ public class S3Notify {
 
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(S3Repository.BUCKET_NAME, key)
-                            .map(resource -> repository.toImage(key, resource)))
+                            .map(resource -> indexer.toImage(key, resource)))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }

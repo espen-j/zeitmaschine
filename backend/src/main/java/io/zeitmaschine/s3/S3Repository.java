@@ -1,11 +1,5 @@
 package io.zeitmaschine.s3;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
-import com.drew.lang.GeoLocation;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
-import com.drew.metadata.exif.GpsDirectory;
 import io.minio.MinioClient;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InvalidEndpointException;
@@ -24,11 +18,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class S3Repository {
@@ -125,51 +117,6 @@ public class S3Repository {
 
     }
 
-    public Flux<Image> getImages() {
-
-        try {
-            return Flux.fromIterable(minioClient.listObjects(BUCKET_NAME))
-                    .map(itemResult -> {
-                        try {
-                            return itemResult.get();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .flatMap(item -> {
-                        // this is broken due to the key not being part of the object (or is it?)
-                        String key = item.objectName();
-                        return get(BUCKET_NAME, key)
-                                .map(resource -> toImage(key, resource));
-                    });
-        } catch (Exception e) {
-            log.error("Error fetching all objects from s3: " + e);
-            return Flux.error(e);
-        }
-    }
-
-    public Image toImage(String key, Resource resource) {
-
-        // FIXME contenttype not checked!
-        try {
-            Image.Builder builder = Image.from(key);
-
-            Metadata metadata = ImageMetadataReader.readMetadata(resource.getInputStream());
-            Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
-            subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
-
-            Optional<GpsDirectory> gpsDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(GpsDirectory.class));
-            gpsDirectory.ifPresent(gps -> {
-                GeoLocation geoLocation = gps.getGeoLocation();
-                if (geoLocation != null)
-                    builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
-            });
-            return builder.build();
-        } catch (IOException | ImageProcessingException e) {
-            throw new RuntimeException("Error reading metadata from image.", e);
-        }
-    }
-
     public Mono<Resource> get(String bucket, String key) {
         try (InputStream object = minioClient.getObject(bucket, key)) {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
@@ -191,5 +138,53 @@ public class S3Repository {
 
     public void put(String bucket, String key, Resource resource, String contentType) throws Exception {
         minioClient.putObject(bucket, key, resource.getInputStream(), contentType);
+    }
+
+    /* This is a nasty function only used for indexing atm. Besides not scaling it needs
+     * a hackish Tuple object to transport the key and resource.
+     * The problem is that this application does not serve the JSON object to the client, elastic
+     * does. So most methods related to images only need the raw image blob. This method serves the only
+     * exception: The indexing to elastic.
+     *
+     */
+    public Flux<Tuple> getImages() {
+        try {
+            return Flux.fromIterable(minioClient.listObjects(BUCKET_NAME))
+                    .map(itemResult -> {
+                        try {
+                            return itemResult.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .flatMap(item -> get(BUCKET_NAME, item.objectName())
+                            .map(resource -> Tuple.from(item.objectName(), resource))
+                    );
+        } catch (Exception e) {
+            log.error("Error fetching all objects from s3: " + e);
+            return Flux.error(e);
+        }
+    }
+
+    public static class Tuple {
+        private String name;
+        private Resource resource;
+
+        private Tuple(String name, Resource resource) {
+            this.name = name;
+            this.resource = resource;
+        }
+
+        public Resource resource() {
+            return resource;
+        }
+
+        public String name() {
+            return name;
+        }
+
+        private static Tuple from(String name, Resource resource) {
+            return new Tuple(name, resource);
+        }
     }
 }

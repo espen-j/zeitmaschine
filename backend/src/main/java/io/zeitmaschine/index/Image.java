@@ -1,4 +1,4 @@
-package io.zeitmaschine.s3;
+package io.zeitmaschine.index;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 

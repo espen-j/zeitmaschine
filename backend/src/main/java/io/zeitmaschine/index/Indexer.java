@@ -1,11 +1,17 @@
 package io.zeitmaschine.index;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.lang.GeoLocation;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.exif.GpsDirectory;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
-import io.zeitmaschine.s3.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,8 +22,10 @@ import org.springframework.web.client.RestTemplate;
 import io.zeitmaschine.s3.S3Repository;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class Indexer {
@@ -85,6 +93,31 @@ public class Indexer {
         createIndex();
 
         // re-index
-        repository.getImages().subscribe(image -> index(image));
+        repository.getImages()
+                .map(tuple -> toImage(tuple.name(), tuple.resource()))
+                .subscribe(image -> index(image));
     }
+
+    Image toImage(String key, Resource resource) {
+
+        // FIXME contenttype not checked!
+        try {
+            Image.Builder builder = Image.from(key);
+
+            Metadata metadata = ImageMetadataReader.readMetadata(resource.getInputStream());
+            Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
+            subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
+
+            Optional<GpsDirectory> gpsDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(GpsDirectory.class));
+            gpsDirectory.ifPresent(gps -> {
+                GeoLocation geoLocation = gps.getGeoLocation();
+                if (geoLocation != null)
+                    builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
+            });
+            return builder.build();
+        } catch (IOException | ImageProcessingException e) {
+            throw new RuntimeException("Error reading metadata from image.", e);
+        }
+    }
+
 }
