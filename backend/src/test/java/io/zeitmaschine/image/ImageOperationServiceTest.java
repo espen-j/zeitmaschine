@@ -19,15 +19,15 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ImagingServiceTest {
+public class ImageOperationServiceTest {
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
-    ImagingService imagingService = new ImagingService();
+    ImageOperationService operationService = new ImageOperationService();
 
     @ParameterizedTest
     @ArgumentsSource(TestImagesProvider.class)
     public void resizeOperation(Resource image) throws IOException {
-        Resource thumbResource = imagingService.resize(image, Dimension.SMALL).block();
+        Resource thumbResource = operationService.resize(image, Dimension.SMALL).block();
 
         BufferedImage thumbnail = ImageIO.read(thumbResource.getInputStream());
 
@@ -40,7 +40,7 @@ public class ImagingServiceTest {
         InputStream stream = ClassLoader.getSystemResourceAsStream("images/" + images[0]);
 
         Resource resource = new InputStreamResource(stream);
-        Resource thumbResource = imagingService.resize(resource, Dimension.SMALL).block();
+        Resource thumbResource = operationService.resize(resource, Dimension.SMALL).block();
 
         BufferedImage thumbnail = ImageIO.read(thumbResource.getInputStream());
 

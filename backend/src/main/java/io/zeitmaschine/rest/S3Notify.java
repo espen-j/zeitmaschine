@@ -39,8 +39,8 @@ public class S3Notify {
         List<String> keys = JsonPath.read(json, "$.Records[*].s3.object.key");
 
         Flux.fromIterable(keys)
-                .flatMap(key -> repository.fetchImage(S3Repository.BUCKET_NAME, key)
-                            .map(resource -> repository.getImage(key, resource)))
+                .flatMap(key -> repository.get(S3Repository.BUCKET_NAME, key)
+                            .map(resource -> repository.toImage(key, resource)))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }

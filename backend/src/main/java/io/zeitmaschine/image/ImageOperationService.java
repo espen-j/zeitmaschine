@@ -4,15 +4,17 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-public class ImagingService {
+@Service
+public class ImageOperationService {
 
     private final WebClient webClient;
 
-    public ImagingService() {
+    public ImageOperationService() {
         this.webClient = WebClient
                 .builder()
                 .baseUrl("http://localhost:9100")

@@ -14,14 +14,11 @@ import io.minio.messages.EventType;
 import io.minio.messages.Filter;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
-import io.zeitmaschine.image.Dimension;
-import io.zeitmaschine.image.ImagingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,7 +26,6 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +44,6 @@ public class S3Repository {
     private final boolean webhook;
 
     private MinioClient minioClient;
-    private ImagingService imagingService = new ImagingService();
 
     @Autowired
     public S3Repository(S3Config config) {
@@ -130,31 +125,6 @@ public class S3Repository {
 
     }
 
-    public Mono<Resource> getImageAsResource(String key, Dimension dimension) {
-
-        return loadCached(key, dimension).switchIfEmpty(Mono.defer(() ->
-                fetchImage(BUCKET_NAME, key)
-                        .flatMap(res -> imagingService.resize(res, dimension))
-                        .doOnSuccess(res -> cache(key, res, dimension))));
-
-    }
-
-    private void cache(String key, Resource thumbnail, Dimension dimension) {
-        try {
-            minioClient.putObject(BUCKET_CACHE_NAME, getThumbName(key, dimension), thumbnail.getInputStream(), MediaType.IMAGE_JPEG_VALUE);
-        } catch (Exception e) {
-            log.error("Failed to store scaled image to cache.", e);
-        }
-    }
-
-    private static String getThumbName(String key, Dimension dimension) {
-        return Paths.get(dimension.name(), key).toString();
-    }
-
-    private Mono<Resource> loadCached(String key, Dimension dimension) {
-        return fetchImage(BUCKET_CACHE_NAME, getThumbName(key, dimension));
-    }
-
     public Flux<Image> getImages() {
 
         try {
@@ -167,9 +137,10 @@ public class S3Repository {
                         }
                     })
                     .flatMap(item -> {
+                        // this is broken due to the key not being part of the object (or is it?)
                         String key = item.objectName();
-                        return fetchImage(BUCKET_NAME, key)
-                                .map(resource -> getImage(key, resource));
+                        return get(BUCKET_NAME, key)
+                                .map(resource -> toImage(key, resource));
                     });
         } catch (Exception e) {
             log.error("Error fetching all objects from s3: " + e);
@@ -177,7 +148,7 @@ public class S3Repository {
         }
     }
 
-    public Image getImage(String key, Resource resource) {
+    public Image toImage(String key, Resource resource) {
 
         // FIXME contenttype not checked!
         try {
@@ -199,7 +170,7 @@ public class S3Repository {
         }
     }
 
-    public Mono<Resource> fetchImage(String bucket, String key) {
+    public Mono<Resource> get(String bucket, String key) {
         try (InputStream object = minioClient.getObject(bucket, key)) {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (ErrorResponseException e) {
@@ -215,5 +186,9 @@ public class S3Repository {
             throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
         }
 
+    }
+
+    public void put(String bucket, String key, Resource resource, String contentType) throws Exception {
+        minioClient.putObject(bucket, key, resource.getInputStream(), contentType);
     }
 }

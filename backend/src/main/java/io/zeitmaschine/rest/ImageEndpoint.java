@@ -1,7 +1,7 @@
 package io.zeitmaschine.rest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.zeitmaschine.image.Dimension;
+import io.zeitmaschine.image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -11,20 +11,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-import io.zeitmaschine.image.Dimension;
-import io.zeitmaschine.s3.S3Repository;
 
 @RestController
 @RequestMapping("/image")
 public class ImageEndpoint {
 
-    private final static Logger log = LoggerFactory.getLogger(ImageEndpoint.class.getName());
-
-    private S3Repository repository;
+    private final ImageService imageService;
 
     @Autowired
-    public ImageEndpoint(S3Repository repository) {
-        this.repository = repository;
+    public ImageEndpoint(ImageService imageService) {
+        this.imageService = imageService;
     }
 
     @GetMapping(value = "/{dimension}", produces = MediaType.IMAGE_JPEG_VALUE)
@@ -33,7 +29,7 @@ public class ImageEndpoint {
         // https://stackoverflow.com/questions/51837086/request-for-reactive-server-response-with-image-content-type-sample
         // https://stackoverflow.com/questions/49259156/spring-webflux-serve-files-from-controller
         try {
-            return repository.getImageAsResource(name, Dimension.valueOf(dimension.toUpperCase()));
+            return imageService.getImageByDimension(name, Dimension.valueOf(dimension.toUpperCase()));
         } catch (Exception e) {
             // TODO this leaks internals.
             return Mono.error(e);
