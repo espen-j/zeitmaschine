@@ -1,5 +1,6 @@
 package io.zeitmaschine.image;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -14,10 +15,11 @@ public class ImageOperationService {
 
     private final WebClient webClient;
 
-    public ImageOperationService() {
+    @Autowired
+    public ImageOperationService(ImageOperationConfig config) {
         this.webClient = WebClient
                 .builder()
-                .baseUrl("http://localhost:9100")
+                .baseUrl(config.getHost())
                 .build();
     }
 

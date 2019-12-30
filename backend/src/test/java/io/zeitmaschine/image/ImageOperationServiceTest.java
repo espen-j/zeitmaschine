@@ -1,6 +1,7 @@
 package io.zeitmaschine.image;
 
 import org.hamcrest.CoreMatchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +23,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ImageOperationServiceTest {
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
-    ImageOperationService operationService = new ImageOperationService();
+    private ImageOperationService operationService;
+
+    @BeforeEach
+    void setUp() {
+        ImageOperationConfig config = new ImageOperationConfig();
+        config.setHost("http://localhost:9100");
+        this.operationService = new ImageOperationService(config);
+    }
 
     @ParameterizedTest
     @ArgumentsSource(TestImagesProvider.class)
@@ -34,7 +42,9 @@ public class ImageOperationServiceTest {
         assertThat(thumbnail.getWidth(), CoreMatchers.is(Dimension.SMALL.getSize()));
     }
 
-    // InputStream made some trouble.. Keep in mind that the InputStreamResource is only usable ones.
+    // InputStream made some trouble.. Keep in mind that the InputStreamResource is only usable once.
+    // Update: this does indeed not work, using ByteArrayResource in productive code:
+    // see: ImageService#getImageByDimension and S3Repository#get
     @Test
     public void inputStreamResource() throws IOException {
         InputStream stream = ClassLoader.getSystemResourceAsStream("images/" + images[0]);
