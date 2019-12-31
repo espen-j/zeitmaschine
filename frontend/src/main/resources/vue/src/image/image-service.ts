@@ -1,19 +1,20 @@
 import axios from 'axios';
 import {Image} from './image';
-import {imageCache} from "./image-cache";
+import {ICache} from "./cache";
+import {NullCache} from "./null-cache";
+import {ImageCache} from "./image-cache";
 
 const PAGING_SIZE: number = 64;
 
 class ImageService {
 
     private readonly endpoint: string;
+    private imageCache: ICache = new NullCache();
 
     constructor() {
         this.endpoint = process.env.VUE_APP_ZM_ELASTIC_ENDPOINT;
         console.log('creating new instance of image-service with endpoint: ' + this.endpoint);
-        imageCache.initialize()
-            .then((dbName) => console.log("Cache database '%s' created.", dbName))
-            .catch(error => console.log("Failed to setup cache: %s", error));
+        new ImageCache().initialize().then(cache => this.imageCache = cache);
     }
 
     public getImages(from: number = 0) {
@@ -34,12 +35,12 @@ class ImageService {
 
     public getImage(name: string, rendition: string = 'thumbnail'): Promise<Blob> {
         const url: string = `image/${rendition}?name=${name}`;
-        return imageCache.get(url)
+        return this.imageCache.get(url)
             .catch(() => {
                 return axios.request({url, responseType: 'blob'})
                     .then(response => response.data)
                     .then(data => {
-                        return imageCache.set(url, data)
+                        return this.imageCache.set(url, data)
                             .catch(error => console.error("Error adding '%s' to cache: {}", url, error));
                     });
             });

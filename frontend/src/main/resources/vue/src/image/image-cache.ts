@@ -1,7 +1,9 @@
+import {ICache} from "./cache";
+
 const dbName: string = 'zCache';
 const imageStore: string = 'imageStore';
 
-class ImageCache {
+export class ImageCache implements ICache {
     private db!: IDBDatabase;
 
     initialize(): Promise<any> {
@@ -13,7 +15,7 @@ class ImageCache {
             };
             request.onsuccess = () => {
                 this.db = request.result;
-                resolve(dbName);
+                resolve(this);
             };
             request.onerror = () => reject(request.error);
             request.onblocked = () => reject(request.error);
