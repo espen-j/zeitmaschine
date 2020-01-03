@@ -13,18 +13,25 @@ import reactor.core.publisher.Mono;
 @Service
 public class ImageOperationService {
 
+    // https://github.com/spring-projects/spring-framework/issues/23961
+    // mobile shots around 3MB, Fujifilm 5MB, RAW 25.. 20MB is a lot leeway.
+    // serverside: https://github.com/spring-projects/spring-framework/blob/master/src/docs/asciidoc/web/webflux.adoc#webflux-config-message-codecs
+    private static final int MAX_EXCHANGE_MEMORY_SIZE = 1024 * 1024 * 20;
+
     private final WebClient webClient;
 
     @Autowired
     public ImageOperationService(ImageOperationConfig config) {
         this.webClient = WebClient
                 .builder()
+                .exchangeStrategies(builder -> builder.codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_EXCHANGE_MEMORY_SIZE)))
                 .baseUrl(config.getHost())
                 .build();
     }
 
     public Mono<Resource> resize(Resource image, Dimension dimension) {
-        return webClient.post()
+        return webClient
+                .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("resize")
                         .queryParam("width", dimension.getSize())
