@@ -1,11 +1,12 @@
 <template>
     <div class="image-overlay">
         <nav>
-            <div class="close-button" v-on:click="close()">X</div>
+            <i class="material-icons close-button" v-on:click="close()"></i>
+            <p class="date">{{ date }}</p>
         </nav>
         <div class="images">
             <div class="image" v-for="slide in slides">
-                <img :src="slide.src" :ref="slide.image.name" v-next="loadNext" :data-index="slide.index">
+                <img :src="slide.src" :ref="slide.image.name" v-next="loadNext" v-select="displayDate" :data-index="slide.index" :data-date="slide.image.date">
             </div>
         </div>
     </div>
@@ -38,7 +39,22 @@
                     });
                 };
                 new IntersectionObserver(callback).observe(el);
+            },
+            select: (el, binding) => {
+
+                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+                    entries.forEach(entry => {
+
+                        if (entry.intersectionRatio == 1) {
+                            let displayDate = binding.value;
+                            let date = el.dataset.date;
+                            displayDate(date);
+                        }
+                    });
+                };
+                new IntersectionObserver(callback, {threshold: 1.0}).observe(el);
             }
+
         }
     })
     export default class Slider extends Vue {
@@ -46,6 +62,8 @@
         @Prop()
         protected index!: number;
         private slides: ImageRendition[] = [];
+
+        private date!: string;
 
         protected close() {
             this.$emit('close');
@@ -83,7 +101,14 @@
                 .catch(e => console.log(e));
         }
 
-
+        displayDate(date: string) {
+            console.info(date);
+            let options: Intl.DateTimeFormatOptions = {
+                day: "numeric", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            };
+            this.date = new Date(date).toLocaleDateString("en-GB", options);
+        }
     }
 
     interface ImageRendition {
@@ -101,21 +126,23 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background-color: white;
         display: flex;
         flex-direction: column;
+        background-color: black;
 
         nav {
             height: 50px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
 
             .close-button {
-                align-self: flex-end;
+                align-self: flex-start;
                 cursor: pointer;
-                width: 35px;
-                height: 35px;
-                font-size: 35px;
+                font-size: 50px;
+
+                &:before {
+                    content: "chevron_left";
+                }
             }
         }
 

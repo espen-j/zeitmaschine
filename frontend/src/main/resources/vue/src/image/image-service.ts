@@ -50,7 +50,8 @@ class ImageService {
         return json.hits.map((hit: any) => {
             return {
                 name: hit._source.name,
-                thumbnail: hit._source.thumbnail
+                thumbnail: hit._source.thumbnail,
+                date: hit._source.created
             };
         });
     }

@@ -1,9 +1,8 @@
 <template>
     <div class="container">
         <div class="cell" v-for="(image, index) in images">
-            <img v-lazyload :data-image="image.name" v-on:click="open(index)"/>
+            <img src="" v-lazyload :data-image="image.name" v-on:click="open(index)"/>
         </div>
-        <span></span>
         <Slider v-if="sliderVisible" @close="closeSlider" :index="selected"/>
     </div>
 </template>
@@ -115,6 +114,15 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+
+            // Hide border: https://stackoverflow.com/questions/10441362/how-can-i-remove-the-border-around-an-image-without-a-source
+            // depends on empty src attribute in html.
+            &[src=""] {
+                visibility: hidden;
+            }
+            &[src="blob:*"] {
+                visibility: visible;
+            }
         }
     }
 

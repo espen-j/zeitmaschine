@@ -1,4 +1,4 @@
 export interface Image {
     name: string;
-    thumbnail: string;
+    date: Date;
 }
