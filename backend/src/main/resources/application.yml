@@ -24,7 +24,8 @@ spring:
 spring:
     profiles: production
 logging:
-    file: /var/log/zeitmaschine/zeitmaschine.log
+    file:
+        name: /var/log/zeitmaschine/zeitmaschine.log
 s3:
     host: http://s3.zeitmaschine.netz
 elasticsearch:
