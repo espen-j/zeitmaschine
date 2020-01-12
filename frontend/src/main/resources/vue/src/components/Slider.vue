@@ -5,8 +5,8 @@
             <p class="date">{{ date }}</p>
         </nav>
         <div class="images">
-            <div class="image" v-for="slide in slides">
-                <img :src="slide.src" :ref="slide.image.name" v-next="loadNext" v-select="displayDate" :data-index="slide.index" :data-date="slide.image.date">
+            <div class="image" v-for="(slide, index) in slides">
+                <img v-lazyload v-select="displayDate" src="" :data-date="slide.date" :data-image="slide.name">
             </div>
         </div>
     </div>
@@ -19,27 +19,6 @@
 
     @Component({
         directives: {
-            next: (el, binding) => {
-
-                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-                    entries.forEach(entry => {
-                        //console.info(entry);
-
-                        if (entry.isIntersecting) {
-                            observer.unobserve(el);
-                            if (binding.value instanceof Function) {
-                                let loadNext = binding.value;
-                                let index = el.dataset.index;
-                                loadNext(index);
-                            }
-
-                            // FIXME always called several times. Runs ones during registration of observer
-                            // console.info(entry);
-                        }
-                    });
-                };
-                new IntersectionObserver(callback).observe(el);
-            },
             select: (el, binding) => {
 
                 const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
@@ -53,7 +32,29 @@
                     });
                 };
                 new IntersectionObserver(callback, {threshold: 1.0}).observe(el);
+            },
+            lazyload: el => {
+
+                function loadImage() {
+                    if (el instanceof HTMLImageElement && el.dataset.image) {
+                        imageService.getImage(el.dataset.image, 'small')
+                            .then(blob => URL.createObjectURL(blob))
+                            .then(src => el.src = src)
+                            .catch(e => console.log(e));
+                    }
+                }
+
+                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            loadImage();
+                            observer.unobserve(el);
+                        }
+                    });
+                };
+                new IntersectionObserver(callback).observe(el);
             }
+
 
         }
     })
@@ -61,44 +62,11 @@
 
         @Prop()
         protected index!: number;
-        private slides: ImageRendition[] = [];
 
-        private date!: string;
+        private dateFormatted: string = "";
 
         protected close() {
             this.$emit('close');
-        }
-
-        protected created() {
-            let current: Image = this.$store.state.images[this.index];
-            imageService.getImage(current.name, 'small')
-                .then(blob => URL.createObjectURL(blob))
-                .then(src => this.slides.push({
-                    image: current,
-                    src: src,
-                    index: this.index
-                }))
-                .catch(e => console.log(e));
-        }
-
-        loadNext(index: number) {
-            index++;
-            let slide = this.slides.find(slide => slide.index === index);
-            if (slide) {
-                console.log("ignoring ", index);
-                return;
-            }
-            let next: Image = this.$store.state.images[index];
-
-            imageService.getImage(next.name, 'small')
-                .then(blob => URL.createObjectURL(blob))
-                .then(src => this.slides.push({
-                    image: next,
-                    src: src,
-                    index: index
-                }))
-                .then()
-                .catch(e => console.log(e));
         }
 
         displayDate(date: string) {
@@ -107,15 +75,18 @@
                 day: "numeric", month: "short", year: "numeric",
                 hour: "2-digit", minute: "2-digit"
             };
-            this.date = new Date(date).toLocaleDateString("en-GB", options);
+            this.dateFormatted = new Date(date).toLocaleDateString("en-GB", options);
+        }
+
+        get date(): string {
+            return this.dateFormatted;
+        }
+
+        get slides(): Image[] {
+            return this.$store.state.images;
         }
     }
 
-    interface ImageRendition {
-        image: Image
-        src: string
-        index: number
-    }
 </script>
 
 <style lang="scss">
