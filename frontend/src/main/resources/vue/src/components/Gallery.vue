@@ -1,19 +1,19 @@
 <template>
     <div class="container">
-        <div class="cell" v-for="(image, index) in images">
-            <img src="" v-lazyload :data-image="image.name" v-on:click="open(index)"/>
+        <div class="cell" v-for="image in images">
+            <img src="" v-lazyload :data-image="image.name" v-on:click="open(image)"/>
         </div>
-        <Slider v-if="sliderVisible" @close="closeSlider" :index="selected"/>
     </div>
 </template>
 
 <script lang="ts">
-    import {Component, Vue, Watch} from 'vue-property-decorator';
+    import {Component, Vue} from 'vue-property-decorator';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import debounce from 'lodash.debounce';
     import throttle from 'lodash.throttle';
     import Slider from './Slider.vue';
+    import router from "../router";
 
     @Component({
         components: {
@@ -45,9 +45,6 @@
     })
     export default class Gallery extends Vue {
 
-        private selected?: number;
-        private sliderVisible: boolean = false;
-
         protected created() {
 
             this.$store.dispatch('loadImages');
@@ -55,15 +52,8 @@
             this.registerScrollHandler();
         }
 
-        protected open(selected: number) {
-            this.selected = selected;
-            this.sliderVisible = true;
-            console.info(this.selected);
-        }
-
-        protected closeSlider() {
-            this.selected = undefined;
-            this.sliderVisible = false;
+        protected open(image: Image) {
+            router.push({ name: 'slide', params: { image: image.name}});
         }
 
         private registerScrollHandler() {
@@ -88,11 +78,6 @@
 
         get images(): Image[] {
             return this.$store.state.images;
-        }
-
-        @Watch('sliderVisible')
-        onPropertyChanged(value: string) {
-            document.body.style.overflow = value ? 'hidden' : ''
         }
     }
 

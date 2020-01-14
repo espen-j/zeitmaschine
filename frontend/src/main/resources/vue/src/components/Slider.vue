@@ -5,7 +5,7 @@
             <p class="date">{{ date }}</p>
         </nav>
         <div class="images">
-            <div class="image" v-for="(slide, index) in slides">
+            <div class="image" v-for="slide in slides" :id="slide.name">
                 <img v-lazyload v-select="displayDate" src="" :data-date="slide.date" :data-image="slide.name">
             </div>
         </div>
@@ -16,6 +16,7 @@
     import {Component, Prop, Vue} from 'vue-property-decorator';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
+    import router from "../router";
 
     @Component({
         directives: {
@@ -66,7 +67,7 @@
         private dateFormatted: string = "";
 
         protected close() {
-            this.$emit('close');
+            router.back();
         }
 
         displayDate(date: string) {

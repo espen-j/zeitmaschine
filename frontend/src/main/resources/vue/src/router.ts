@@ -3,6 +3,7 @@ import Router from 'vue-router';
 import Gallery from './components/Gallery.vue';
 import Callback from './components/Callback.vue';
 import {authService} from './auth/auth-service';
+import Slider from "./components/Slider.vue";
 
 Vue.use(Router);
 
@@ -20,8 +21,20 @@ const router = new Router({
       path: '/callback',
       name: 'callback',
       component: Callback
+    },
+    {
+      path: '/slide#:image',
+      name: 'slide',
+      component: Slider
     }
-  ]
+  ],
+  scrollBehavior (to) {
+    if (to.hash) {
+      return {
+        selector: to.hash
+      }
+    }
+  }
 });
 
 router.beforeEach((to, from, next) => {
