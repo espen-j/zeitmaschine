@@ -14,7 +14,9 @@
 
         protected created() {
             console.log('callback created');
-            authService.handleAuthentication().then(() => router.push('/'));
+            authService.handleAuthentication()
+                .then(() => this.$store.dispatch('loadImages'))
+                .then(() => router.push('/'));
         }
     }
 </script>

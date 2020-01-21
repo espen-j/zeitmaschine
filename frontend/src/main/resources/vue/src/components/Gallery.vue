@@ -46,9 +46,6 @@
     export default class Gallery extends Vue {
 
         protected created() {
-
-            this.$store.dispatch('loadImages');
-
             this.registerScrollHandler();
         }
 
