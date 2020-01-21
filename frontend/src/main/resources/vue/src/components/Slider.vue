@@ -70,6 +70,15 @@
             router.back();
         }
 
+        protected created() {
+            // Started with "scroll to anchor" from https://router.vuejs.org/guide/advanced/scroll-behavior.html
+            // but this seems to need the DOM with the anchors to be in place. In our case those are added by this component.
+            // Ended up with this via:
+            // https://stackoverflow.com/questions/45201014/how-to-handle-anchors-bookmarks-with-vue-router/45206192?noredirect=1#comment84019465_45206192
+
+            setTimeout(() => location.hash = this.$route.hash, 1);
+        }
+
         displayDate(date: string) {
             console.info(date);
             let options: Intl.DateTimeFormatOptions = {

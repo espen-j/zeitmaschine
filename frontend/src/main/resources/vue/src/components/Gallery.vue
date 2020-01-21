@@ -53,7 +53,7 @@
         }
 
         protected open(image: Image) {
-            router.push({ name: 'slide', params: { image: image.name}});
+            router.push({ name: 'slide', hash: `#${image.name}`});
         }
 
         private registerScrollHandler() {

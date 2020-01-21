@@ -23,19 +23,12 @@ const router = new Router({
       component: Callback
     },
     {
-      path: '/slide#:image',
+      path: '/slide',
       name: 'slide',
-      component: Slider
+      component: Slider,
+      meta: {authRequired: true}
     }
-  ],
-  scrollBehavior (to) {
-    if (to.hash) {
-      return {
-        selector: to.hash
-      }
-    }
-  }
-});
+  ]});
 
 router.beforeEach((to, from, next) => {
   if (to.meta.authRequired) {
