@@ -19,7 +19,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>13</java.version>
-    <minio.version>6.0.7</minio.version>
+    <minio.version>7.1.4</minio.version>
     <auth0-spring-security.version>1.2.3</auth0-spring-security.version>
     <spring-cloud.version>Hoxton.SR1</spring-cloud.version>
   </properties>

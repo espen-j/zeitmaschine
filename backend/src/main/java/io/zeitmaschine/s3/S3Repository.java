@@ -1,6 +1,7 @@
 package io.zeitmaschine.s3;
 
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
@@ -104,9 +105,7 @@ public class S3Repository {
         eventList.add(EventType.OBJECT_REMOVED_DELETE);
         queueConfiguration.setEvents(eventList);
 
-        Filter filter = new Filter();
-        filter.setSuffixRule(".jpg");
-        queueConfiguration.setFilter(filter);
+        queueConfiguration.setSuffixRule(".jpg");
 
         queueConfigurationList.add(queueConfiguration);
         notificationConfiguration.setQueueConfigurationList(queueConfigurationList);
@@ -137,7 +136,12 @@ public class S3Repository {
     }
 
     public void put(String bucket, String key, Resource resource, String contentType) throws Exception {
-        minioClient.putObject(bucket, key, resource.getInputStream(), contentType);
+        minioClient.putObject(PutObjectArgs.builder()
+                .bucket(bucket)
+                .object(key)
+                .stream(resource.getInputStream(), resource.contentLength(), -1)
+                .contentType(contentType)
+                .build());
     }
 
     /* This is a nasty function only used for indexing atm. Besides not scaling it needs
