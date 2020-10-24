@@ -1,5 +1,18 @@
 package io.zeitmaschine.s3;
 
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
 import io.minio.BucketExistsArgs;
 import io.minio.DeleteBucketNotificationArgs;
 import io.minio.GetBucketNotificationArgs;
@@ -10,25 +23,11 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.SetBucketNotificationArgs;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InvalidEndpointException;
-import io.minio.errors.InvalidPortException;
 import io.minio.messages.EventType;
-import io.minio.messages.Filter;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import javax.annotation.PostConstruct;
-import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
 
 @Service
 public class S3Repository {
