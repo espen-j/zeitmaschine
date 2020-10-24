@@ -1,7 +1,14 @@
 package io.zeitmaschine.s3;
 
+import io.minio.BucketExistsArgs;
+import io.minio.DeleteBucketNotificationArgs;
+import io.minio.GetBucketNotificationArgs;
+import io.minio.GetObjectArgs;
+import io.minio.ListObjectsArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.SetBucketNotificationArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
@@ -47,23 +54,23 @@ public class S3Repository {
     }
 
     @PostConstruct
-    private void init() throws InvalidPortException, InvalidEndpointException {
+    private void init() {
         log.info("s3 host: {}", host);
         log.info("s3 access key: {}", key);
         log.info("s3 webhook: {}", webhook);
-        this.minioClient = new MinioClient(host, key, secret);
+        this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
 
         try {
-            if (!minioClient.bucketExists(BUCKET_NAME)) {
-                minioClient.makeBucket(BUCKET_NAME);
+            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_NAME).build())) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(BUCKET_NAME).build());
             }
         } catch (Exception e) {
             log.error("Failed to query or create bucket '{}'.", BUCKET_NAME, e);
         }
 
         try {
-            if (!minioClient.bucketExists(BUCKET_CACHE_NAME)) {
-                minioClient.makeBucket(BUCKET_CACHE_NAME);
+            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_CACHE_NAME).build())) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(BUCKET_CACHE_NAME).build());
             }
         } catch (Exception e) {
             log.error("Failed to query or create bucket '{}'", BUCKET_CACHE_NAME, e);
@@ -73,7 +80,7 @@ public class S3Repository {
             if (webhook) {
                 enableWebHookNotification();
             } else {
-                minioClient.removeAllBucketNotification(BUCKET_NAME);
+                minioClient.deleteBucketNotification(DeleteBucketNotificationArgs.builder().bucket(BUCKET_NAME).build());
             }
         } catch (Exception e) {
             log.error("Failed to update notifications for bucket '{}'", BUCKET_NAME, e);
@@ -88,7 +95,7 @@ public class S3Repository {
      */
     private void enableWebHookNotification() throws Exception {
 
-        NotificationConfiguration notificationConfiguration = minioClient.getBucketNotification(BUCKET_NAME);
+        NotificationConfiguration notificationConfiguration = minioClient.getBucketNotification(GetBucketNotificationArgs.builder().bucket(BUCKET_NAME).build());
 
         List<QueueConfiguration> queueConfigurationList = notificationConfiguration.queueConfigurationList();
         if (queueConfigurationList.size() > 0) {
@@ -111,13 +118,19 @@ public class S3Repository {
         notificationConfiguration.setQueueConfigurationList(queueConfigurationList);
 
         // Set updated notification configuration.
-        minioClient.setBucketNotification(BUCKET_NAME, notificationConfiguration);
+        minioClient.setBucketNotification(SetBucketNotificationArgs.builder()
+                .bucket(BUCKET_NAME)
+                .config(notificationConfiguration)
+                .build());
         log.info("Bucket notification set successfully");
 
     }
 
     public Mono<Resource> get(String bucket, String key) {
-        try (InputStream object = minioClient.getObject(bucket, key)) {
+        try (InputStream object = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(bucket)
+                .object(key)
+                .build())) {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().errorCode()) {
@@ -153,7 +166,7 @@ public class S3Repository {
      */
     public Flux<Tuple> getImages() {
         try {
-            return Flux.fromIterable(minioClient.listObjects(BUCKET_NAME))
+            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(BUCKET_NAME).build()))
                     .map(itemResult -> {
                         try {
                             return itemResult.get();
