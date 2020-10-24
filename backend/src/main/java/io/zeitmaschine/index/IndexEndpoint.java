@@ -1,6 +1,8 @@
 package io.zeitmaschine.index;
 
 import com.jayway.jsonpath.JsonPath;
+
+import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +23,15 @@ import java.util.List;
 @RequestMapping("/s3")
 public class IndexEndpoint {
 
-    private S3Repository repository;
-    private Indexer indexer;
+    private final S3Repository repository;
+    private final Indexer indexer;
+    private final String bucket;
 
     @Autowired
-    public IndexEndpoint(S3Repository repository, Indexer indexer) {
+    public IndexEndpoint(S3Repository repository, S3Config config, Indexer indexer) {
         this.repository = repository;
         this.indexer = indexer;
+        this.bucket = config.getBucket();
     }
 
     @PostMapping("/webhook")
@@ -36,7 +40,7 @@ public class IndexEndpoint {
         List<String> keys = JsonPath.read(json, "$.Records[*].s3.object.key");
 
         Flux.fromIterable(keys)
-                .flatMap(key -> repository.get(S3Repository.BUCKET_NAME, key)
+                .flatMap(key -> repository.get(bucket, key)
                             .map(resource -> indexer.toImage(key, resource)))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();

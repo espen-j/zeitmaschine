@@ -1,5 +1,7 @@
 s3:
     host: http://localhost:9000
+    bucket: media
+    cache-bucket: media-cache
     webhook: true
     access:
         key: "test"
@@ -32,3 +34,11 @@ elasticsearch:
     host: http://elastic.zeitmaschine.netz
 imaginary:
     host: http://zeitmaschine:9100
+
+---
+
+spring:
+    profiles: integration-test
+s3:
+    bucket: int-test
+    cache-bucket: int-test-cache

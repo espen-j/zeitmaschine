@@ -34,10 +34,9 @@ public class S3Repository {
 
     private final static Logger log = LoggerFactory.getLogger(S3Repository.class.getName());
 
-    public static final String BUCKET_NAME = "media";
-    public static final String BUCKET_CACHE_NAME = "media-cache";
-
     private final String host;
+    private final String bucket;
+    private final String cacheBucket;
     private final String key;
     private final String secret;
     private final boolean webhook;
@@ -50,39 +49,43 @@ public class S3Repository {
         this.key = config.getAccess().getKey();
         this.secret = config.getAccess().getSecret();
         this.webhook = config.isWebhook();
+        this.bucket = config.getBucket();
+        this.cacheBucket = config.getCacheBucket();
     }
 
     @PostConstruct
     private void init() {
         log.info("s3 host: {}", host);
+        log.info("s3 bucket: {}", bucket);
+        log.info("s3 cache-bucket: {}", cacheBucket);
         log.info("s3 access key: {}", key);
         log.info("s3 webhook: {}", webhook);
         this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
 
         try {
-            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_NAME).build())) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(BUCKET_NAME).build());
+            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
             }
         } catch (Exception e) {
-            log.error("Failed to query or create bucket '{}'.", BUCKET_NAME, e);
+            log.error("Failed to query or create bucket '{}'.", bucket, e);
         }
 
         try {
-            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_CACHE_NAME).build())) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(BUCKET_CACHE_NAME).build());
+            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(cacheBucket).build())) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(cacheBucket).build());
             }
         } catch (Exception e) {
-            log.error("Failed to query or create bucket '{}'", BUCKET_CACHE_NAME, e);
+            log.error("Failed to query or create bucket '{}'", cacheBucket, e);
         }
 
         try {
             if (webhook) {
                 enableWebHookNotification();
             } else {
-                minioClient.deleteBucketNotification(DeleteBucketNotificationArgs.builder().bucket(BUCKET_NAME).build());
+                minioClient.deleteBucketNotification(DeleteBucketNotificationArgs.builder().bucket(bucket).build());
             }
         } catch (Exception e) {
-            log.error("Failed to update notifications for bucket '{}'", BUCKET_NAME, e);
+            log.error("Failed to update notifications for bucket '{}'", bucket, e);
         }
     }
 
@@ -94,13 +97,14 @@ public class S3Repository {
      */
     private void enableWebHookNotification() throws Exception {
 
-        NotificationConfiguration notificationConfiguration = minioClient.getBucketNotification(GetBucketNotificationArgs.builder().bucket(BUCKET_NAME).build());
+        NotificationConfiguration notificationConfiguration = minioClient.getBucketNotification(GetBucketNotificationArgs.builder().bucket(bucket).build());
 
         List<QueueConfiguration> queueConfigurationList = notificationConfiguration.queueConfigurationList();
         if (queueConfigurationList.size() > 0) {
             // skip if already created, otherwise error concerning overlapping suffixes
             return;
         }
+        queueConfigurationList = new LinkedList<>(); // create new list
 
         // Add a new SQS configuration.
         QueueConfiguration queueConfiguration = new QueueConfiguration();
@@ -118,7 +122,7 @@ public class S3Repository {
 
         // Set updated notification configuration.
         minioClient.setBucketNotification(SetBucketNotificationArgs.builder()
-                .bucket(BUCKET_NAME)
+                .bucket(bucket)
                 .config(notificationConfiguration)
                 .build());
         log.info("Bucket notification set successfully");
@@ -165,7 +169,7 @@ public class S3Repository {
      */
     public Flux<Tuple> getImages() {
         try {
-            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(BUCKET_NAME).build()))
+            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).build()))
                     .map(itemResult -> {
                         try {
                             return itemResult.get();
@@ -173,7 +177,7 @@ public class S3Repository {
                             throw new RuntimeException(e);
                         }
                     })
-                    .flatMap(item -> get(BUCKET_NAME, item.objectName())
+                    .flatMap(item -> get(bucket, item.objectName())
                             .map(resource -> Tuple.from(item.objectName(), resource))
                     );
         } catch (Exception e) {

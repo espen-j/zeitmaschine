@@ -8,16 +8,10 @@ import org.springframework.stereotype.Component;
 public class S3Config {
 
     private String host;
+    private String bucket;
+    private String cacheBucket;
     private boolean webhook;
     private Access access;
-
-    public Access getAccess() {
-        return access;
-    }
-
-    public void setAccess(Access access) {
-        this.access = access;
-    }
 
     public String getHost() {
         return host;
@@ -25,6 +19,30 @@ public class S3Config {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public void setBucket(String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setCacheBucket(String cacheBucket) {
+        this.cacheBucket = cacheBucket;
+    }
+
+    public String getCacheBucket() {
+        return cacheBucket;
+    }
+
+    public String getBucket() {
+        return bucket;
+    }
+
+    public Access getAccess() {
+        return access;
+    }
+
+    public void setAccess(Access access) {
+        this.access = access;
     }
 
     public boolean isWebhook() {
