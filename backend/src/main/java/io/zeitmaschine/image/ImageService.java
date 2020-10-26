@@ -32,6 +32,7 @@ public class ImageService {
     public Mono<Resource> getImageByDimension(String key, Dimension dimension) {
         return loadCached(key, dimension).switchIfEmpty(Mono.defer(() ->
                 s3Repository.get(bucket, key)
+                        .switchIfEmpty(Mono.error(new RuntimeException(String.format("Resource found for '%s'.", key))))
                         .flatMap(res -> operationService.resize(res, dimension))
                         .doOnSuccess(res -> cache(key, res, dimension))));
     }

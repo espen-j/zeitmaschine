@@ -29,8 +29,8 @@ public class ImageEndpoint {
         try {
             return imageService.getImageByDimension(name, Dimension.valueOf(dimension.toUpperCase()));
         } catch (Exception e) {
-            // TODO this leaks internals.
-            return Mono.error(e);
+            // TODO this leaks internals. Still? - Can we just remove the catch?
+            return Mono.error(new IllegalArgumentException("Resource not found"));
         }
     }
 }
