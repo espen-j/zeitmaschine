@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ImageOperationServiceTest {
+public class ImageOperationServiceIT {
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
     private ImageOperationService operationService;

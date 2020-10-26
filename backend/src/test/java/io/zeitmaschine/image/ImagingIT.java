@@ -45,7 +45,7 @@ import io.zeitmaschine.s3.S3Config;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Allows non-static @BeforeAll and @AfterAll
-public class ImagingIntegrationTest {
+public class ImagingIT {
 
     private static final String TEST_IMAGE_NAME = "IMG_20181001_185137.jpg";
 

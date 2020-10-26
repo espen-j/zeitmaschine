@@ -25,9 +25,9 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ImaginaryTest {
+public class ImaginaryIT {
 
-    private final static Logger LOG = LoggerFactory.getLogger(ImaginaryTest.class.getName());
+    private final static Logger LOG = LoggerFactory.getLogger(ImaginaryIT.class.getName());
 
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
