@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -22,3 +21,11 @@ jobs:
         java-version: 13
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: docker up
+        run: docker-compose -f docker-integration-test.yml up --exit-code-from zeitmaschine
