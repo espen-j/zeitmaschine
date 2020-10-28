@@ -3,13 +3,19 @@ services:
   minio:
     image: minio/minio:RELEASE.2020-10-09T22-55-05Z
     container_name: zm-minio-test
+    ports:
+      - 9000:9000
     environment:
       MINIO_ACCESS_KEY: test
       MINIO_SECRET_KEY: testtest
+      MINIO_NOTIFY_WEBHOOK_ENABLE: "on"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT: https://zm-test:8080/s3/webhook
     command: server /data
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
     container_name: zm-elastic-test
+    ports:
+      - 9200:9200
     environment:
       - discovery.type=single-node
       - http.cors.enabled=true
@@ -17,11 +23,14 @@ services:
   imaginary:
     image: h2non/imaginary:1.2.4
     container_name: zm-imaginary-test
+    ports:
+      - 9100:9100
     environment:
-      PORT: 9000
+      PORT: 9100
       DEBUG: "*"
   zeitmaschine:
     image: maven:3.6-openjdk-14-slim
+    container_name: zm-test
     volumes:
       - ./:/usr/src/mymaven
     working_dir: /usr/src/mymaven

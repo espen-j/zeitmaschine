@@ -9,10 +9,13 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,11 +28,18 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import io.zeitmaschine.s3.S3Config;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("integration-test")
 public class ImaginaryIT {
 
     private final static Logger LOG = LoggerFactory.getLogger(ImaginaryIT.class.getName());
 
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
+
+    @Autowired
+    private ImageOperationConfig config;
 
     private WebClient webClient;
 
@@ -39,7 +49,7 @@ public class ImaginaryIT {
         // https://www.baeldung.com/webflux-webclient-parameters
         this.webClient = WebClient
                 .builder()
-                .baseUrl("http://localhost:9100")
+                .baseUrl(config.getHost())
                 .filter(logRequest())
                 .build();
     }

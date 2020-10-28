@@ -39,6 +39,18 @@ imaginary:
 
 spring:
     profiles: integration-test
+
 s3:
+    host: http://zm-minio-test:9000
     bucket: int-test
     cache-bucket: int-test-cache
+    webhook: true
+    access:
+        key: "test"
+        secret: "testtest"
+elasticsearch:
+    host: http://zm-elastic-test:9200
+    index: "zeitmaschine"
+    resource: "image"
+imaginary:
+    host: http://zm-imaginary-test:9100

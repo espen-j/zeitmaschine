@@ -1,16 +1,18 @@
 package io.zeitmaschine.image;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.test.context.ActiveProfiles;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -20,17 +22,13 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("integration-test")
 public class ImageOperationServiceIT {
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
+    @Autowired
     private ImageOperationService operationService;
-
-    @BeforeEach
-    void setUp() {
-        ImageOperationConfig config = new ImageOperationConfig();
-        config.setHost("http://localhost:9100");
-        this.operationService = new ImageOperationService(config);
-    }
 
     @ParameterizedTest
     @ArgumentsSource(TestImagesProvider.class)
