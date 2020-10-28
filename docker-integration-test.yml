@@ -22,5 +22,8 @@ services:
       DEBUG: "*"
   zeitmaschine:
     image: maven:3.6-openjdk-14-slim
+    volumes:
+      - ./:/usr/src/mymaven
+    working_dir: /usr/src/mymaven
     command: mvn verify -Pintegration-tests
 
