@@ -8,23 +8,29 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import io.minio.BucketExistsArgs;
 import io.minio.ListObjectsArgs;
@@ -43,8 +49,10 @@ import io.minio.errors.XmlParserException;
 import io.zeitmaschine.s3.S3Config;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("integration-test")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS) // Allows non-static @BeforeAll and @AfterAll
+//@ActiveProfiles("integration-test")
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS) // Allows non-static @BeforeAll and @AfterAll
+@ContextConfiguration(initializers = {ImagingIT.Initializer.class})
+@Testcontainers
 public class ImagingIT {
 
     private static final String TEST_IMAGE_NAME = "IMG_20181001_185137.jpg";
@@ -59,8 +67,23 @@ public class ImagingIT {
     private String bucket;
     private String cacheBucket;
 
-    @BeforeAll
+    private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2020-10-09T22-55-05Z";
+    private static final int MINIO_PORT = 9000;
+    // will be shared between test methods
+    @Container
+    private static GenericContainer minioContainer = new GenericContainer(DockerImageName.parse(MINIO_CONTAINER))
+            .withEnv(Map.of(
+                    "MINIO_ACCESS_KEY", "test",
+                    "MINIO_SECRET_KEY", "testtest",
+                    "MINIO_NOTIFY_WEBHOOK_ENABLE", "on",
+                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT", "https://zm-test:8080/s3/webhook"))
+            .withCommand("server /data")
+            .withExposedPorts(MINIO_PORT);
+
+
+    @BeforeEach
     void setUp() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, InvalidBucketNameException, ErrorResponseException, RegionConflictException {
+
         minioClient = MinioClient.builder()
                 .endpoint(config.getHost())
                 .credentials(config.getAccess().getKey(), config.getAccess().getSecret()).build();
@@ -81,12 +104,6 @@ public class ImagingIT {
                 .stream(image.getInputStream(), image.contentLength(), -1)
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .build());
-    }
-
-    @AfterAll
-    void tearDown() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, InvalidBucketNameException, ErrorResponseException {
-        wipeBucket(bucket);
-        wipeBucket(cacheBucket);
     }
 
     private void wipeBucket(String wipe) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidBucketNameException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
@@ -153,6 +170,17 @@ public class ImagingIT {
                 .exchange()
                 //.expectStatus().is4xxClientError(); this is correcter.
                 .expectStatus().is5xxServerError();
+    }
+
+
+    // https://www.baeldung.com/spring-boot-testcontainers-integration-test
+    static class Initializer
+            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
+            TestPropertyValues.of(
+                    "s3.host=" + "http://" + minioContainer.getHost() + ":" + minioContainer.getMappedPort(MINIO_PORT)
+            ).applyTo(configurableApplicationContext.getEnvironment());
+        }
     }
 
 }
