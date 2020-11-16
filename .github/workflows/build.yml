@@ -15,17 +15,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 13
+    - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 11
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-  integration-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: docker up
-        run: docker-compose -f docker-integration-test.yml up --exit-code-from zeitmaschine
+      run: mvn verify -Pintegration-tests
