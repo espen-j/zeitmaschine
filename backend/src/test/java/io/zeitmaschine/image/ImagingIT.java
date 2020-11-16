@@ -28,6 +28,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -69,6 +70,7 @@ public class ImagingIT {
 
     private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2020-10-09T22-55-05Z";
     private static final int MINIO_PORT = 9000;
+
     // will be shared between test methods
     @Container
     private static GenericContainer minioContainer = new GenericContainer(DockerImageName.parse(MINIO_CONTAINER))
@@ -79,6 +81,25 @@ public class ImagingIT {
                     "MINIO_NOTIFY_WEBHOOK_ENDPOINT", "https://zm-test:8080/s3/webhook"))
             .withCommand("server /data")
             .withExposedPorts(MINIO_PORT);
+
+
+    private static final String ELASTICSEARCH_VERSION = "6.5.4";
+    private static final String ELASTIC_CONTAINER = "docker.elastic.co/elasticsearch/elasticsearch";
+
+    private static final Integer ELASTIC_PORT = 9200;
+
+    // will be shared between test methods
+    @Container
+    private static GenericContainer elasticContainer = new ElasticsearchContainer(
+            DockerImageName
+                    .parse(ELASTIC_CONTAINER)
+                    .withTag(ELASTICSEARCH_VERSION))
+            .withEnv(Map.of(
+                    "discovery.type", "single-node",
+                    "http.cors.enabled","true",
+                    "http.cors.allow-origin","*"
+            ))
+            .withExposedPorts(ELASTIC_PORT);
 
 
     @BeforeEach
@@ -178,7 +199,8 @@ public class ImagingIT {
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
             TestPropertyValues.of(
-                    "s3.host=" + "http://" + minioContainer.getHost() + ":" + minioContainer.getMappedPort(MINIO_PORT)
+                    "s3.host=" + "http://" + minioContainer.getHost() + ":" + minioContainer.getMappedPort(MINIO_PORT),
+                    "elasticsearch.host=" + "http://" + elasticContainer.getHost() + ":" + elasticContainer.getMappedPort(ELASTIC_PORT)
             ).applyTo(configurableApplicationContext.getEnvironment());
         }
     }
