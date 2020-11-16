@@ -34,11 +34,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import io.minio.BucketExistsArgs;
-import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.RemoveBucketArgs;
-import io.minio.RemoveObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
@@ -50,9 +47,7 @@ import io.minio.errors.XmlParserException;
 import io.zeitmaschine.s3.S3Config;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@ActiveProfiles("integration-test")
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS) // Allows non-static @BeforeAll and @AfterAll
-@ContextConfiguration(initializers = {ImagingIT.Initializer.class})
+@ContextConfiguration(initializers = { ImagingIT.Initializer.class })
 @Testcontainers
 public class ImagingIT {
 
@@ -96,10 +91,18 @@ public class ImagingIT {
                     .withTag(ELASTICSEARCH_VERSION))
             .withEnv(Map.of(
                     "discovery.type", "single-node",
-                    "http.cors.enabled","true",
-                    "http.cors.allow-origin","*"
+                    "http.cors.enabled", "true",
+                    "http.cors.allow-origin", "*"
             ))
             .withExposedPorts(ELASTIC_PORT);
+
+    private static final int IMAGINARY_PORT = 8088;
+
+    // will be shared between test methods
+    @Container
+    private static GenericContainer imaginaryContainer = new GenericContainer(DockerImageName.parse("h2non/imaginary:1.2.4"))
+            .withEnv("PORT", String.valueOf(IMAGINARY_PORT))
+            .withExposedPorts(IMAGINARY_PORT);
 
 
     @BeforeEach
@@ -116,8 +119,9 @@ public class ImagingIT {
 
         // Created in S3Repository
         if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()) ||
-                !minioClient.bucketExists(BucketExistsArgs.builder().bucket(cacheBucket).build()))
+                !minioClient.bucketExists(BucketExistsArgs.builder().bucket(cacheBucket).build())) {
             throw new RuntimeException("Buckets not created.");
+        }
 
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(bucket)
@@ -125,24 +129,6 @@ public class ImagingIT {
                 .stream(image.getInputStream(), image.contentLength(), -1)
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .build());
-    }
-
-    private void wipeBucket(String wipe) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidBucketNameException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
-        minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(wipe)
-                .recursive(true)
-                .build())
-                .forEach(obj -> {
-                    try {
-                        minioClient.removeObject(RemoveObjectArgs.builder()
-                                .bucket(wipe)
-                                .object(obj.get().objectName())
-                                .build());
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to delete object.", e);
-                    }
-                });
-        minioClient.removeBucket(RemoveBucketArgs.builder().bucket(wipe).build());
     }
 
     /**
@@ -200,7 +186,8 @@ public class ImagingIT {
         public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
             TestPropertyValues.of(
                     "s3.host=" + "http://" + minioContainer.getHost() + ":" + minioContainer.getMappedPort(MINIO_PORT),
-                    "elasticsearch.host=" + "http://" + elasticContainer.getHost() + ":" + elasticContainer.getMappedPort(ELASTIC_PORT)
+                    "elasticsearch.host=" + "http://" + elasticContainer.getHost() + ":" + elasticContainer.getMappedPort(ELASTIC_PORT),
+                    "imaginary.host=" + "http://" + imaginaryContainer.getHost() + ":" + imaginaryContainer.getMappedPort(IMAGINARY_PORT)
             ).applyTo(configurableApplicationContext.getEnvironment());
         }
     }
