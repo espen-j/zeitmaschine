@@ -24,7 +24,7 @@ public class ImageOperationService {
     public ImageOperationService(ImageOperationConfig config) {
         this.webClient = WebClient
                 .builder()
-                .exchangeStrategies(builder -> builder.codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_EXCHANGE_MEMORY_SIZE)))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_EXCHANGE_MEMORY_SIZE))
                 .baseUrl(config.getHost())
                 .build();
     }
