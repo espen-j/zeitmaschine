@@ -1,6 +1,8 @@
 package io.zeitmaschine.s3;
 
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import io.minio.BucketExistsArgs;
 import io.minio.DeleteBucketNotificationArgs;
@@ -28,6 +31,7 @@ import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Service
 public class S3Repository {
@@ -40,6 +44,7 @@ public class S3Repository {
     private final String key;
     private final String secret;
     private final boolean webhook;
+    private final WebClient webClient;
 
     private MinioClient minioClient;
 
@@ -51,6 +56,11 @@ public class S3Repository {
         this.webhook = config.isWebhook();
         this.bucket = config.getBucket();
         this.cacheBucket = config.getCacheBucket();
+
+        this.webClient = WebClient
+                .builder()
+                .baseUrl(config.getHost())
+                .build();
     }
 
     @PostConstruct
@@ -60,8 +70,28 @@ public class S3Repository {
         log.info("s3 cache-bucket: {}", cacheBucket);
         log.info("s3 access key: {}", key);
         log.info("s3 webhook: {}", webhook);
-        this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
 
+        log.info("Waiting for minio..");
+
+        webClient.get()
+                .uri("minio/health/live")
+                .retrieve()
+                .bodyToMono(String.class)
+                .retryWhen(Retry.backoff(3, Duration.of(2, ChronoUnit.SECONDS))
+                        .doAfterRetry(retrySignal -> log.info("Retry failed."))
+                        .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                            log.error("Minio not ready. Aborting..");
+                            throw new RuntimeException(retrySignal.failure().getMessage());
+                        }))
+                .doOnSuccess(response -> {
+                    log.info("Minio is ready: {}", response);
+                    initBucket();
+                })
+                .block();
+    }
+
+    private void initBucket() {
+        this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
@@ -138,13 +168,13 @@ public class S3Repository {
             return Mono.just(new ByteArrayResource(object.readAllBytes()));
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().errorCode()) {
-                case NO_SUCH_OBJECT:
-                case NO_SUCH_KEY:
-                case RESOURCE_NOT_FOUND:
-                    log.debug("No object found for '{}'.", key);
-                    return Mono.empty();
-                default:
-                    throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
+            case NO_SUCH_OBJECT:
+            case NO_SUCH_KEY:
+            case RESOURCE_NOT_FOUND:
+                log.debug("No object found for '{}'.", key);
+                return Mono.empty();
+            default:
+                throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
             }
         } catch (Exception e) {
             throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);

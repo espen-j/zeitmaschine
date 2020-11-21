@@ -1,13 +1,14 @@
 package io.zeitmaschine.index;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
-import com.drew.lang.GeoLocation;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
-import com.drew.metadata.exif.GpsDirectory;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.ReadContext;
+import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +20,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import io.zeitmaschine.s3.S3Repository;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Map;
-import java.util.Optional;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.lang.GeoLocation;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.exif.GpsDirectory;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
+
+import io.zeitmaschine.s3.S3Repository;
+import reactor.util.retry.Retry;
 
 @Service
 public class Indexer {
@@ -35,6 +42,7 @@ public class Indexer {
     private final String indexUrl;
     private final String indexesUrl;
     private final String resourceUrl;
+    private final WebClient webClient;
 
     private S3Repository repository;
     private RestTemplate restTemplate = new RestTemplate();
@@ -46,21 +54,44 @@ public class Indexer {
         this.indexesUrl = String.format("%s/_all", config.getHost());
         this.indexUrl = String.format("%s/%s", config.getHost(), config.getIndex());
         this.resourceUrl = String.format("%s/%s", indexUrl, config.getResource());
+
+        this.webClient = WebClient
+                .builder()
+                .baseUrl(config.getHost())
+                .build();
     }
 
     @PostConstruct
     void setup() {
-        LOG.info("Checking elasticsearch index: '{}'", indexUrl);
-        ResponseEntity<String> existing = restTemplate.getForEntity(indexesUrl, String.class);
-        ReadContext document = JsonPath.parse(existing.getBody());
 
-        Map<String, String> zm = document.read("$");
+        LOG.info("elastic: {}", indexesUrl);
 
-        boolean exists = zm.containsKey(index);
-        LOG.info("Index '{}' existing: {}", index, exists);
-        if (!exists) {
-            createIndex();
-        }
+        LOG.info("Waiting for elastic..");
+
+        webClient.get()
+                .uri("_cat/health")
+                .retrieve()
+                .bodyToMono(String.class)
+                .retryWhen(Retry.backoff(5, Duration.of(2, ChronoUnit.SECONDS))
+                        .doAfterRetry(retrySignal -> LOG.info("Retry failed."))
+                        .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                            LOG.error("Elastic not ready. Aborting..");
+                            throw new RuntimeException(retrySignal.failure().getMessage());
+                        }))
+                .doOnSuccess(s -> {
+                    LOG.info("Checking elasticsearch index: '{}'", indexUrl);
+                    ResponseEntity<String> existing = restTemplate.getForEntity(indexesUrl, String.class);
+                    ReadContext document = JsonPath.parse(existing.getBody());
+
+                    Map<String, String> zm = document.read("$");
+
+                    boolean exists = zm.containsKey(index);
+                    LOG.info("Index '{}' existing: {}", index, exists);
+                    if (!exists) {
+                        createIndex();
+                    }
+                })
+                .block();
     }
 
     private void createIndex() {
