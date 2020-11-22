@@ -21,6 +21,14 @@ spring:
                 jwk:
                     jwk-set-uri: https://zeitmaschine.eu.auth0.com/.well-known/jwks.json
                     issuer-uri: https://zeitmaschine.eu.auth0.com/
+management:
+    endpoint:
+        health:
+            enabled: true
+            probes:
+                enabled: true
+            show-details: always
+
 ---
 
 spring:
