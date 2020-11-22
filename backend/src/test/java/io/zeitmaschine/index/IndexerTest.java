@@ -3,9 +3,11 @@ package io.zeitmaschine.index;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -15,6 +17,8 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import reactor.test.StepVerifier;
 
 @Testcontainers
 class IndexerTest {
@@ -34,13 +38,28 @@ class IndexerTest {
                     .withTag(ELASTICSEARCH_VERSION))
             .withExposedPorts(ELASTIC_PORT);
 
-    /*
-       Naked elastic requests for creation and deletion of an index.
-     */
+    private String elasticHost;
+
+    @BeforeEach
+    private void beforeAll() {
+        this.elasticHost = "http://" + elasticContainer.getHost() + ":" + elasticContainer.getMappedPort(ELASTIC_PORT);
+    }
+
+    @Test
+    void health() {
+        IndexerConfig config = new IndexerConfig();
+        config.setHost(elasticHost);
+        StepVerifier.create(new IndexerHealthIndicator(config).health())
+                .expectNext(Health.up().build())
+                .expectComplete();
+    }
+
+    /* Naked elastic requests for creation and deletion of an index. */
     @Test
     void indexCreateDelete() {
+
         WebTestClient index = WebTestClient.bindToServer()
-                .baseUrl("http://" + elasticContainer.getHost() + ":" + elasticContainer.getMappedPort(ELASTIC_PORT))
+                .baseUrl(elasticHost)
                 .filter(logRequest())
                 .build();
 
