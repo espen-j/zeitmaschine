@@ -2,12 +2,8 @@ package io.zeitmaschine.index;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +28,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 
 import io.zeitmaschine.s3.S3Repository;
-import reactor.util.retry.Retry;
 
 @Service
 public class Indexer {
@@ -59,48 +54,28 @@ public class Indexer {
                 .builder()
                 .baseUrl(config.getHost())
                 .build();
-    }
-
-    @PostConstruct
-    void setup() {
-
         LOG.info("elastic: {}", indexesUrl);
-
-        LOG.info("Waiting for elastic..");
-
-        webClient.get()
-                .uri("_cat/health")
-                .retrieve()
-                .bodyToMono(String.class)
-                .retryWhen(Retry.backoff(5, Duration.of(2, ChronoUnit.SECONDS))
-                        .doAfterRetry(retrySignal -> LOG.info("Retry failed."))
-                        .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-                            LOG.error("Elastic not ready. Aborting..");
-                            throw new RuntimeException(retrySignal.failure().getMessage());
-                        }))
-                .doOnSuccess(s -> {
-                    LOG.info("Checking elasticsearch index: '{}'", indexUrl);
-                    ResponseEntity<String> existing = restTemplate.getForEntity(indexesUrl, String.class);
-                    ReadContext document = JsonPath.parse(existing.getBody());
-
-                    Map<String, String> zm = document.read("$");
-
-                    boolean exists = zm.containsKey(index);
-                    LOG.info("Index '{}' existing: {}", index, exists);
-                    if (!exists) {
-                        createIndex();
-                    }
-                })
-                .block();
     }
 
+
+    // TODO: call this over REST?
     private void createIndex() {
+        LOG.info("Checking elasticsearch index: '{}'", indexUrl);
+        ResponseEntity<String> existing = restTemplate.getForEntity(indexesUrl, String.class);
+        ReadContext document = JsonPath.parse(existing.getBody());
 
-        LOG.info("Creating index '{}'.", indexUrl);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, String> zm = document.read("$");
 
-        restTemplate.put(indexUrl, null);
+        boolean exists = zm.containsKey(index);
+        LOG.info("Index '{}' existing: {}", index, exists);
+        if (!exists) {
+            LOG.info("Creating index '{}'.", indexUrl);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            restTemplate.put(indexUrl, null);
+        }
+
     }
 
     public void index(Image image) {
@@ -150,5 +125,4 @@ public class Indexer {
             throw new RuntimeException("Error reading metadata from image.", e);
         }
     }
-
 }
