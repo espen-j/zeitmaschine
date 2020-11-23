@@ -57,7 +57,7 @@ public class S3Repository {
         log.info("s3 webhook: {}", webhook);
     }
 
-    private void initBucket() {
+    public void initBucket() {
         this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {

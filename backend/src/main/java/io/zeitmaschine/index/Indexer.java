@@ -57,9 +57,7 @@ public class Indexer {
         LOG.info("elastic: {}", indexesUrl);
     }
 
-
-    // TODO: call this over REST?
-    private void createIndex() {
+    public void initIndex() {
         LOG.info("Checking elasticsearch index: '{}'", indexUrl);
         ResponseEntity<String> existing = restTemplate.getForEntity(indexesUrl, String.class);
         ReadContext document = JsonPath.parse(existing.getBody());
@@ -96,7 +94,7 @@ public class Indexer {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.delete(indexUrl);
 
-        createIndex();
+        initIndex();
 
         // re-index
         repository.getImages()
