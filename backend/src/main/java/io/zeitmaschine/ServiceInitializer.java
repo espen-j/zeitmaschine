@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -47,12 +48,18 @@ public class ServiceInitializer {
         Mono<Health> minioLiveness = Mono.defer(() -> minioHealthIndicator.health());
         Mono<Health> elasticLiveness = Mono.defer(() -> indexerHealthIndicator.health());
 
-        minioLiveness.retryWhen(Retry.fixedDelay(4, Duration.of(3, SECONDS)))
-                .doOnSuccess(state -> repository.initBucket())
+        minioLiveness
+                // healthIndicators return a Health object, we need error for retry
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Minio not ready")))
+                .retryWhen(Retry.fixedDelay(4, Duration.of(3, SECONDS)))
+                .doOnSuccess(health -> repository.initBucket())
                 .block();
 
-        elasticLiveness.retryWhen(Retry.fixedDelay(4, Duration.of(3, SECONDS)))
-                .doOnSuccess(state -> indexer.initIndex())
+        elasticLiveness
+                // healthIndicators return a Health object, we need error for retry
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Minio not ready")))
+                .retryWhen(Retry.fixedDelay(4, Duration.of(3, SECONDS)))
+                .doOnSuccess(health -> indexer.initIndex())
                 .block();
     }
 }
