@@ -19,5 +19,8 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build with Maven
-      run: mvn verify -Pintegration-tests jib:build -Djib.to.auth.username=espen-j -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }}
+      run: mvn verify -Pintegration-tests
+    - name: Deploy maven artifact and container
+      run: mvn deploy jib:build -Djib.to.auth.username=espen-j -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }}
