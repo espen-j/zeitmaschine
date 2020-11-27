@@ -4,9 +4,10 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>zone.rawbot.zeitmaschine</groupId>
+    <groupId>io.zeitmaschine</groupId>
     <artifactId>zeitmaschine-project</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>zeitmaschine</artifactId>
@@ -23,7 +24,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>zone.rawbot.zeitmaschine</groupId>
+      <groupId>io.zeitmaschine</groupId>
       <artifactId>zeitmaschine-frontend</artifactId>
     </dependency>
     <dependency>

@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>zone.rawbot.zeitmaschine</groupId>
+  <groupId>io.zeitmaschine</groupId>
   <artifactId>zeitmaschine-project</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
@@ -32,12 +32,12 @@
     <dependencies>
       <!-- dependencies to self -->
       <dependency>
-        <groupId>zone.rawbot.zeitmaschine</groupId>
+        <groupId>io.zeitmaschine</groupId>
         <artifactId>zeitmaschine</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>zone.rawbot.zeitmaschine</groupId>
+        <groupId>io.zeitmaschine</groupId>
         <artifactId>zeitmaschine-frontend</artifactId>
         <version>${project.version}</version>
       </dependency>
