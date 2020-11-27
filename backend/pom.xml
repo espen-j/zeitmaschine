@@ -20,6 +20,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <metadata-extractor.version>2.11.0</metadata-extractor.version>
     <testcontainers.version>1.15.0</testcontainers.version>
+    <!-- Deploy to GH packages -->
+    <maven.deploy.skip>false</maven.deploy.skip>
   </properties>
 
   <dependencies>
