@@ -19,7 +19,3 @@ frontend/node
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Ansible
-*.retry
-contrib/ansible/dist
