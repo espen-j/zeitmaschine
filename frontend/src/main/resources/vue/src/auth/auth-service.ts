@@ -1,5 +1,4 @@
 import auth0, {Auth0DecodedHash, Auth0Error} from 'auth0-js';
-import {EventEmitter} from 'events';
 import axios from 'axios';
 
 const webAuth = new auth0.WebAuth({
@@ -12,13 +11,12 @@ const webAuth = new auth0.WebAuth({
 
 const localStorageKey = 'loggedIn';
 
-class AuthService extends EventEmitter {
+class AuthService {
     private readonly domain: string;
     private clientId: string;
 
 
     constructor() {
-        super();
         this.domain = process.env.VUE_APP_AUTH0_DOMAIN;
         this.clientId = process.env.VUE_APP_AUTH0_CLIENT_ID;
         console.log('creating new instance of auth-service for domain: ' + this.domain);
