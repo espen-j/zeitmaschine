@@ -39,9 +39,7 @@ import io.minio.PutObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
-import io.minio.errors.InvalidBucketNameException;
 import io.minio.errors.InvalidResponseException;
-import io.minio.errors.RegionConflictException;
 import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
 import io.zeitmaschine.s3.S3Config;
@@ -106,7 +104,7 @@ public class ImagingIT {
 
 
     @BeforeEach
-    void setUp() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, InvalidBucketNameException, ErrorResponseException, RegionConflictException {
+    void setUp() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, ErrorResponseException {
 
         minioClient = MinioClient.builder()
                 .endpoint(config.getHost())

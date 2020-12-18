@@ -57,7 +57,7 @@ public class ServiceInitializer {
 
         elasticLiveness
                 // healthIndicators return a Health object, we need error for retry
-                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Minio not ready")))
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Elastic not ready")))
                 .retryWhen(Retry.fixedDelay(4, Duration.of(3, SECONDS)))
                 .doOnSuccess(health -> indexer.initIndex())
                 .block();
