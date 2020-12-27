@@ -5,14 +5,13 @@
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from 'vue-property-decorator';
+    import {Vue} from 'vue-class-component';
     import {authService} from '../auth/auth-service';
     import router from '../router';
 
-    @Component
     export default class Callback extends Vue {
 
-        protected created() {
+        public created() {
             console.log('callback created');
             authService.handleAuthentication().then(() => router.push('/'));
         }

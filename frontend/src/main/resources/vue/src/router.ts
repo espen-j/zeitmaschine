@@ -1,34 +1,34 @@
-import Vue from 'vue';
-import Router from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Gallery from './components/Gallery.vue';
 import Callback from './components/Callback.vue';
 import {authService} from './auth/auth-service';
 import Slider from "./components/Slider.vue";
 
-Vue.use(Router);
+const routes: Array<RouteRecordRaw> = [
+  {
+    path: '/',
+    name: 'home',
+    component: Gallery,
+    meta: {authRequired: true}
 
-const router = new Router({
-  mode: 'history',
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: Gallery,
-      meta: {authRequired: true}
+  },
+  {
+    path: '/callback',
+    name: 'callback',
+    component: Callback
+  },
+  {
+    path: '/slide',
+    name: 'slide',
+    component: Slider,
+    meta: {authRequired: true}
+  }
+]
 
-    },
-    {
-      path: '/callback',
-      name: 'callback',
-      component: Callback
-    },
-    {
-      path: '/slide',
-      name: 'slide',
-      component: Slider,
-      meta: {authRequired: true}
-    }
-  ]});
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes
+})
 
 router.beforeEach((to, from, next) => {
   if (to.meta.authRequired) {

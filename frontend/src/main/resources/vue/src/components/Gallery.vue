@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from 'vue-property-decorator';
+    import {Options, Vue} from 'vue-class-component';
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import debounce from 'lodash.debounce';
@@ -15,7 +15,7 @@
     import Slider from './Slider.vue';
     import router from "../router";
 
-    @Component({
+    @Options({
         components: {
             Slider
         },
@@ -45,7 +45,7 @@
     })
     export default class Gallery extends Vue {
 
-        protected created() {
+        public created() {
 
             this.$store.dispatch('loadImages');
 

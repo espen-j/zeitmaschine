@@ -1,11 +1,8 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import { createStore } from 'vuex'
 import { Image } from '../image/image';
 import { imageService } from '../image/image-service';
 
-Vue.use(Vuex);
-
-export default new Vuex.Store({
+export default createStore({
     state: {
         images: [] as Image[]
     },
