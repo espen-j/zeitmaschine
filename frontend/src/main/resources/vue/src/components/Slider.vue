@@ -13,98 +13,95 @@
 </template>
 
 <script lang="ts">
-    import {Options, Vue} from 'vue-class-component';
+import { Options, Vue } from 'vue-class-component'
 
-    import {Image} from '../image/image';
-    import {imageService} from '../image/image-service';
-    import router from "../router";
-    import {Store, useStore} from 'vuex'
-    import {key, State} from '../store'
-
+import { Image } from '../image/image'
+import { imageService } from '../image/image-service'
+import router from '../router'
+import { Store, useStore } from 'vuex'
+import { key, State } from '../store'
 
     @Options({
-        props: {
-          index: {
-            required: true
-          }
-        },
-        directives: {
-            select: (el, binding) => {
-
-                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-                    entries.forEach(entry => {
-
-                        if (entry.intersectionRatio == 1) {
-                            let displayDate = binding.value;
-                            let date = el.dataset.date;
-                            displayDate(date);
-                        }
-                    });
-                };
-                new IntersectionObserver(callback, {threshold: 1.0}).observe(el);
-            },
-            lazyload: el => {
-
-                function loadImage() {
-                    if (el instanceof HTMLImageElement && el.dataset.image) {
-                        imageService.getImage(el.dataset.image, 'small')
-                            .then(blob => URL.createObjectURL(blob))
-                            .then(src => el.src = src)
-                            .catch(e => console.log(e));
-                    }
-                }
-
-                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            loadImage();
-                            observer.unobserve(el);
-                        }
-                    });
-                };
-                new IntersectionObserver(callback).observe(el);
-            }
-
-
+      props: {
+        index: {
+          required: true
         }
-    })
-    export default class Slider extends Vue {
+      },
+      directives: {
+        select: (el, binding) => {
+          const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+            entries.forEach(entry => {
+              if (entry.intersectionRatio == 1) {
+                const displayDate = binding.value
+                const date = el.dataset.date
+                displayDate(date)
+              }
+            })
+          }
+          new IntersectionObserver(callback, { threshold: 1.0 }).observe(el)
+        },
+        lazyload: el => {
+          function loadImage () {
+            if (el instanceof HTMLImageElement && el.dataset.image) {
+              imageService.getImage(el.dataset.image, 'small')
+                .then(blob => URL.createObjectURL(blob))
+                .then(src => el.src = src)
+                .catch(e => console.log(e))
+            }
+          }
 
-        private dateFormatted: string = "";
+          const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                loadImage()
+                observer.unobserve(el)
+              }
+            })
+          }
+          new IntersectionObserver(callback).observe(el)
+        }
+
+      }
+    })
+export default class Slider extends Vue {
+        private dateFormatted = '';
         private store!: Store<State>;
 
-        protected close() {
-            router.back();
+        protected close () {
+          router.back()
         }
 
-        created() {
+        created () {
           this.store = useStore(key)
 
-            // Started with "scroll to anchor" from https://router.vuejs.org/guide/advanced/scroll-behavior.html
-            // but this seems to need the DOM with the anchors to be in place. In our case those are added by this component.
-            // Ended up with this via:
-            // https://stackoverflow.com/questions/45201014/how-to-handle-anchors-bookmarks-with-vue-router/45206192?noredirect=1#comment84019465_45206192
+          // Started with "scroll to anchor" from https://router.vuejs.org/guide/advanced/scroll-behavior.html
+          // but this seems to need the DOM with the anchors to be in place. In our case those are added by this component.
+          // Ended up with this via:
+          // https://stackoverflow.com/questions/45201014/how-to-handle-anchors-bookmarks-with-vue-router/45206192?noredirect=1#comment84019465_45206192
 
-            setTimeout(() => location.hash = this.$route.hash, 1);
+          setTimeout(() => location.hash = this.$route.hash, 1)
         }
 
-        displayDate(date: string) {
-            console.info(date);
-            let options: Intl.DateTimeFormatOptions = {
-                day: "numeric", month: "short", year: "numeric",
-                hour: "2-digit", minute: "2-digit"
-            };
-            this.dateFormatted = new Date(date).toLocaleDateString("en-GB", options);
+        displayDate (date: string) {
+          console.info(date)
+          const options: Intl.DateTimeFormatOptions = {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }
+          this.dateFormatted = new Date(date).toLocaleDateString('en-GB', options)
         }
 
-        get date(): string {
-            return this.dateFormatted;
+        get date (): string {
+          return this.dateFormatted
         }
 
-        get slides(): Image[] {
-            return this.store.state.images;
+        get slides (): Image[] {
+          return this.store.state.images
         }
-    }
+}
 
 </script>
 

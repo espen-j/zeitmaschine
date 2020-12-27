@@ -7,84 +7,82 @@
 </template>
 
 <script lang="ts">
-    import {Options, Vue} from 'vue-class-component';
-    import {Image} from '../image/image';
-    import {imageService} from '../image/image-service';
-    import debounce from 'lodash.debounce';
-    import throttle from 'lodash.throttle';
-    import Slider from './Slider.vue';
-    import router from "../router";
-    import {Store, useStore} from "vuex";
-    import {key, State} from "../store";
+import { Options, Vue } from 'vue-class-component'
+import { Image } from '../image/image'
+import { imageService } from '../image/image-service'
+import debounce from 'lodash.debounce'
+import throttle from 'lodash.throttle'
+import Slider from './Slider.vue'
+import router from '../router'
+import { Store, useStore } from 'vuex'
+import { key, State } from '../store'
 
     @Options({
-        components: {
-            Slider
-        },
-        directives: {
-            lazyload: el => {
-
-                function loadImage() {
-                    if (el instanceof HTMLImageElement && el.dataset.image) {
-                        imageService.getImage(el.dataset.image)
-                            .then(blob => URL.createObjectURL(blob))
-                            .then(src => el.src = src)
-                            .catch(e => console.log(e));
-                    }
-                }
-
-                const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            loadImage();
-                            observer.unobserve(el);
-                        }
-                    });
-                };
-                new IntersectionObserver(callback).observe(el);
+      components: {
+        Slider
+      },
+      directives: {
+        lazyload: el => {
+          function loadImage () {
+            if (el instanceof HTMLImageElement && el.dataset.image) {
+              imageService.getImage(el.dataset.image)
+                .then(blob => URL.createObjectURL(blob))
+                .then(src => el.src = src)
+                .catch(e => console.log(e))
             }
-        }
-    })
-    export default class Gallery extends Vue {
+          }
 
+          const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                loadImage()
+                observer.unobserve(el)
+              }
+            })
+          }
+          new IntersectionObserver(callback).observe(el)
+        }
+      }
+    })
+export default class Gallery extends Vue {
       private store!: Store<State>;
 
-        public created() {
-            this.store = useStore(key)
+      public created () {
+        this.store = useStore(key)
 
-            this.store.dispatch('loadImages');
+        this.store.dispatch('loadImages')
 
-            this.registerScrollHandler();
-        }
+        this.registerScrollHandler()
+      }
 
-        protected open(image: Image) {
-            router.push({ name: 'slide', hash: `#${image.name}`});
-        }
+      protected open (image: Image) {
+        router.push({ name: 'slide', hash: `#${image.name}` })
+      }
 
-        private registerScrollHandler() {
-            window.addEventListener('scroll', throttle(() => {
-                const scrollTop = document.documentElement.scrollTop;
-                const innerHeight = window.innerHeight;
-                const offsetHeight = document.documentElement.offsetHeight;
+      private registerScrollHandler () {
+        window.addEventListener('scroll', throttle(() => {
+          const scrollTop = document.documentElement.scrollTop
+          const innerHeight = window.innerHeight
+          const offsetHeight = document.documentElement.offsetHeight
 
-                const bottomOfWindow = scrollTop + innerHeight + 50 > offsetHeight;
+          const bottomOfWindow = scrollTop + innerHeight + 50 > offsetHeight
 
-                if (bottomOfWindow) {
-                    console.log('bottom');
-                    // create debounced function and call it in one line
-                    debounce(this.load, 3000, {leading: true})();
-                }
-            }, 400));
-        }
+          if (bottomOfWindow) {
+            console.log('bottom')
+            // create debounced function and call it in one line
+            debounce(this.load, 3000, { leading: true })()
+          }
+        }, 400))
+      }
 
-        private load() {
-            this.store.dispatch('loadImages');
-        }
+      private load () {
+        this.store.dispatch('loadImages')
+      }
 
-        get images(): Image[] {
-            return this.store.state.images;
-        }
-    }
+      get images (): Image[] {
+        return this.store.state.images
+      }
+}
 
 </script>
 

@@ -5,17 +5,16 @@
 </template>
 
 <script lang="ts">
-    import {Vue} from 'vue-class-component';
-    import {authService} from '../auth/auth-service';
-    import router from '../router';
+import { Vue } from 'vue-class-component'
+import { authService } from '../auth/auth-service'
+import router from '../router'
 
-    export default class Callback extends Vue {
-
-        public created() {
-            console.log('callback created');
-            authService.handleAuthentication().then(() => router.push('/'));
-        }
-    }
+export default class Callback extends Vue {
+  public created () {
+    console.log('callback created')
+    authService.handleAuthentication().then(() => router.push('/'))
+  }
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

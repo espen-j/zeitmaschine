@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import {store, key} from './store'
-import {authService} from './auth/auth-service'
+import { store, key } from './store'
+import { authService } from './auth/auth-service'
 
-authService.reset();
+authService.reset()
 
 createApp(App)
   .use(store, key)

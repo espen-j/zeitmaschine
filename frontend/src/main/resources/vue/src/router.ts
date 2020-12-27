@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import Gallery from './components/Gallery.vue';
-import Callback from './components/Callback.vue';
-import {authService} from './auth/auth-service';
-import Slider from "./components/Slider.vue";
+import Gallery from './components/Gallery.vue'
+import Callback from './components/Callback.vue'
+import { authService } from './auth/auth-service'
+import Slider from './components/Slider.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'home',
     component: Gallery,
-    meta: {authRequired: true}
+    meta: { authRequired: true }
 
   },
   {
@@ -21,7 +21,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/slide',
     name: 'slide',
     component: Slider,
-    meta: {authRequired: true}
+    meta: { authRequired: true }
   }
 ]
 
@@ -33,13 +33,13 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   if (to.meta.authRequired) {
     if (authService.isAuthenticated()) {
-      next();
+      next()
     } else {
-      authService.login();
+      authService.login()
     }
   } else {
-    next();
+    next()
   }
-});
+})
 
-export default router;
+export default router
