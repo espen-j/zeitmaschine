@@ -1,10 +1,19 @@
-import { createStore } from 'vuex'
+import { InjectionKey } from 'vue'
+import {createStore, Store} from 'vuex'
 import { Image } from '../image/image';
 import { imageService } from '../image/image-service';
 
-export default createStore({
+// define your typings for the store state
+export interface State {
+  images: Image[]
+}
+
+// define injection key
+export const key: InjectionKey<Store<State>> = Symbol()
+
+export const store: Store<State> = createStore<State>({
     state: {
-        images: [] as Image[]
+        images: []
     },
     mutations: {
         addImages(state, images: Image[]) {

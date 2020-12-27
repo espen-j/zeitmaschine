@@ -14,13 +14,20 @@
 
 <script lang="ts">
     import {Options, Vue} from 'vue-class-component';
-    import Prop from 'vue';
 
     import {Image} from '../image/image';
     import {imageService} from '../image/image-service';
     import router from "../router";
+    import {Store, useStore} from 'vuex'
+    import {key, State} from '../store'
+
 
     @Options({
+        props: {
+          index: {
+            required: true
+          }
+        },
         directives: {
             select: (el, binding) => {
 
@@ -63,16 +70,16 @@
     })
     export default class Slider extends Vue {
 
-        @Prop()
-        protected index!: number;
-
         private dateFormatted: string = "";
+        private store!: Store<State>;
 
         protected close() {
             router.back();
         }
 
         created() {
+          this.store = useStore(key)
+
             // Started with "scroll to anchor" from https://router.vuejs.org/guide/advanced/scroll-behavior.html
             // but this seems to need the DOM with the anchors to be in place. In our case those are added by this component.
             // Ended up with this via:
@@ -95,7 +102,7 @@
         }
 
         get slides(): Image[] {
-            return this.$store.state.images;
+            return this.store.state.images;
         }
     }
 

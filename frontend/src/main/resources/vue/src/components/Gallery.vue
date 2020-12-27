@@ -14,6 +14,8 @@
     import throttle from 'lodash.throttle';
     import Slider from './Slider.vue';
     import router from "../router";
+    import {Store, useStore} from "vuex";
+    import {key, State} from "../store";
 
     @Options({
         components: {
@@ -45,9 +47,12 @@
     })
     export default class Gallery extends Vue {
 
-        public created() {
+      private store!: Store<State>;
 
-            this.$store.dispatch('loadImages');
+        public created() {
+            this.store = useStore(key)
+
+            this.store.dispatch('loadImages');
 
             this.registerScrollHandler();
         }
@@ -73,11 +78,11 @@
         }
 
         private load() {
-            this.$store.dispatch('loadImages');
+            this.store.dispatch('loadImages');
         }
 
         get images(): Image[] {
-            return this.$store.state.images;
+            return this.store.state.images;
         }
     }
 
