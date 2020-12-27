@@ -29,7 +29,7 @@ class AuthService {
 
     // Handles the callback request from Auth0
     public handleAuthentication() {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             webAuth.parseHash((error: Auth0Error, authResult: Auth0DecodedHash | null) => {
                 if (error) {
                     console.log('error auth0');
