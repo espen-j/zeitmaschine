@@ -1,4 +1,4 @@
-export interface ICache {
-    get(key: string): Promise<any>;
-    set(key: string, value: any): Promise<any>;
+export interface Cache {
+    get(key: string): Promise<Blob>;
+    set(key: string, value: Blob): Promise<Blob>;
 }

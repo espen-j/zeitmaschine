@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Image } from './image'
-import { ICache } from './cache'
+import { Cache } from './cache'
 import { NullCache } from './null-cache'
 import { ImageCache } from './image-cache'
 
@@ -8,12 +8,12 @@ const PAGING_SIZE = 64
 
 class ImageService {
     private readonly endpoint: string;
-    private imageCache: ICache = new NullCache();
+    private imageCache: Cache = new NullCache();
 
     constructor () {
       this.endpoint = process.env.VUE_APP_ZM_ELASTIC_ENDPOINT
       console.log('creating new instance of image-service with endpoint: ' + this.endpoint)
-      new ImageCache().initialize().then(cache => this.imageCache = cache)
+      new ImageCache().initialize().then(cache => { this.imageCache = cache })
     }
 
     public getImages (from = 0) {
@@ -31,7 +31,7 @@ class ImageService {
       })
     }
 
-    public getImage (name: string, rendition = 'thumbnail'): Promise<Blob> {
+    public getImage (name: string, rendition = 'thumbnail'): Promise<void | Blob> {
       const url = `image/${rendition}?name=${name}`
       return this.imageCache.get(url)
         .catch(() => {

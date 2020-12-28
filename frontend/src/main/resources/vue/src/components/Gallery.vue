@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <div class="cell" v-for="image in images">
+        <div class="cell" v-for="image in images" v-bind:key="image.name">
             <img src="" v-lazyload :data-image="image.name" v-on:click="open(image)"/>
         </div>
     </div>
@@ -27,7 +27,7 @@ import { key, State } from '../store'
             if (el instanceof HTMLImageElement && el.dataset.image) {
               imageService.getImage(el.dataset.image)
                 .then(blob => URL.createObjectURL(blob))
-                .then(src => el.src = src)
+                .then(src => { el.src = src })
                 .catch(e => console.log(e))
             }
           }

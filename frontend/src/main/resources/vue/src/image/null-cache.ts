@@ -1,14 +1,14 @@
-import { ICache } from './cache'
+import { Cache } from './cache'
 
-export class NullCache implements ICache {
-  get (key: string): Promise<any> {
+export class NullCache implements Cache {
+  get (key: string): Promise<Blob> {
     return new Promise((resolve, reject) => {
-      reject('Null DB does not cache.')
+      reject(new Error('Null DB does not cache.'))
     })
   }
 
-  public set (key: string, value: any): Promise<any> {
-    return new Promise((resolve, reject) => {
+  public set (key: string, value: Blob): Promise<Blob> {
+    return new Promise((resolve) => {
       console.info('Null DB..')
       resolve(value)
     })

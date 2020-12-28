@@ -1,9 +1,9 @@
-import { ICache } from './cache'
+import { Cache } from './cache'
 
 const dbName = 'zCache'
 const imageStore = 'imageStore'
 
-export class ImageCache implements ICache {
+export class ImageCache implements Cache {
     private db!: IDBDatabase;
 
     initialize (): Promise<any> {
@@ -29,7 +29,7 @@ export class ImageCache implements ICache {
           .get(key)
         request.onsuccess = () => {
           if (!request.result) {
-            reject('No result found.')
+            reject(new Error('No result found.'))
           }
           resolve(request.result)
         }
@@ -39,7 +39,7 @@ export class ImageCache implements ICache {
       })
     }
 
-    public set (key: string, value: any): Promise<any> {
+    public set (key: string, value: Blob): Promise<Blob> {
       return new Promise((resolve, reject) => {
         const request = this.db.transaction(imageStore, 'readwrite')
           .objectStore(imageStore)
