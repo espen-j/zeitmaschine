@@ -13,7 +13,7 @@
   <artifactId>zeitmaschine-frontend</artifactId>
 
   <properties>
-    <frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
+    <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
   </properties>
   <build>
     <resources>
@@ -35,7 +35,7 @@
               <goal>install-node-and-npm</goal>
             </goals>
             <configuration>
-              <nodeVersion>v13.2.0</nodeVersion>
+              <nodeVersion>v14.15.3</nodeVersion>
             </configuration>
           </execution>
           <!-- Install all project dependencies -->
