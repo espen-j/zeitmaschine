@@ -34,9 +34,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
-public class ImageOperationServiceIT {
+public class ImageOperationServiceTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ImageOperationServiceIT.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(ImageOperationServiceTest.class.getName());
 
     private static final String[] images = {"IMG_20161208_024708.jpg", "IMG_20180614_214734.jpg", "IMG_20181001_185137.jpg"};
 
