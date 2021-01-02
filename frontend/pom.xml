@@ -70,6 +70,19 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>node</directory>
+            </fileset>
+            <fileset>
+              <directory>node_modules</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
