@@ -5,7 +5,7 @@
             <p class="date">{{ date }}</p>
         </nav>
         <div class="images">
-            <div class="image" v-for="slide in slides" :id="slide.name">
+            <div class="image" v-for="slide in slides" :id="slide.name" v-bind:key="slide.name">
                 <img v-lazyload v-select="displayDate" src="" :data-date="slide.date" :data-image="slide.name">
             </div>
         </div>
@@ -31,7 +31,7 @@ import { key, State } from '../store'
         select: (el, binding) => {
           const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
             entries.forEach(entry => {
-              if (entry.intersectionRatio == 1) {
+              if (entry.intersectionRatio === 1) {
                 const displayDate = binding.value
                 const date = el.dataset.date
                 displayDate(date)
@@ -45,7 +45,7 @@ import { key, State } from '../store'
             if (el instanceof HTMLImageElement && el.dataset.image) {
               imageService.getImage(el.dataset.image, 'small')
                 .then(blob => URL.createObjectURL(blob))
-                .then(src => el.src = src)
+                .then(src => { el.src = src })
                 .catch(e => console.log(e))
             }
           }
@@ -79,7 +79,7 @@ export default class Slider extends Vue {
           // Ended up with this via:
           // https://stackoverflow.com/questions/45201014/how-to-handle-anchors-bookmarks-with-vue-router/45206192?noredirect=1#comment84019465_45206192
 
-          setTimeout(() => location.hash = this.$route.hash, 1)
+          setTimeout(() => { location.hash = this.$route.hash }, 1)
         }
 
         displayDate (date: string) {
