@@ -120,7 +120,7 @@ public class IndexingIT {
                 .build());
 
         // index might not have been initialized, wait a bit..
-        Thread.sleep(3000);
+        Thread.sleep(5000);
 
         String jsonString = new JSONObject()
                 .put("from", 0)
