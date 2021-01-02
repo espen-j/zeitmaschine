@@ -11,7 +11,7 @@ services:
       MINIO_ACCESS_KEY: test
       MINIO_SECRET_KEY: testtest
       MINIO_NOTIFY_WEBHOOK_ENABLE_zm: "on"
-      MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm: "http://host.docker.internal:8080/s3/webhook"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm: "http://host.docker.internal:8080/index/webhook"
     command: server /data
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4

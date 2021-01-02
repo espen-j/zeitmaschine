@@ -16,11 +16,9 @@ import java.util.List;
 
 /**
  * Index endpoint for s3 to notify and trigger a manual reindexing.
- *
- * TODO Change endpoint /s3 -> /index: Needs minio (s3) webhook reconfiguration!
  */
 @RestController
-@RequestMapping("/s3")
+@RequestMapping("/index")
 public class IndexEndpoint {
 
     private final S3Repository repository;
