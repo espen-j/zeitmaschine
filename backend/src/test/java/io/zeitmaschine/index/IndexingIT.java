@@ -62,7 +62,7 @@ public class IndexingIT {
                     "MINIO_ACCESS_KEY", "test",
                     "MINIO_SECRET_KEY", "testtest",
                     "MINIO_NOTIFY_WEBHOOK_ENABLE_zm", "on",
-                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm", "http://host.docker.internal:8080/index/webhook"))
+                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm", "http://172.17.0.1:8080/index/webhook"))
             .withCommand("server /data")
             .withExposedPorts(MINIO_PORT);
 
