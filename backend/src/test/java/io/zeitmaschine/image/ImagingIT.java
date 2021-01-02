@@ -70,8 +70,8 @@ public class ImagingIT {
             .withEnv(Map.of(
                     "MINIO_ACCESS_KEY", "test",
                     "MINIO_SECRET_KEY", "testtest",
-                    "MINIO_NOTIFY_WEBHOOK_ENABLE", "on",
-                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT", "https://zm-test:8080/s3/webhook"))
+                    "MINIO_NOTIFY_WEBHOOK_ENABLE_zm", "on",
+                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm", "http://zm-test:8080/s3/webhook"))
             .withCommand("server /data")
             .withExposedPorts(MINIO_PORT);
 

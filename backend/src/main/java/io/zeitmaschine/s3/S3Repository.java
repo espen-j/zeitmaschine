@@ -106,7 +106,7 @@ public class S3Repository {
         // Add a new SQS configuration.
         QueueConfiguration queueConfiguration = new QueueConfiguration();
         // printed on successful startup: chicken egg problem.
-        queueConfiguration.setQueue("arn:minio:sqs::_:webhook");
+        queueConfiguration.setQueue("arn:minio:sqs::zm:webhook");
 
         List<EventType> eventList = new LinkedList<>();
         eventList.add(EventType.OBJECT_CREATED_PUT);
