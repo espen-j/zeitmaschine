@@ -62,9 +62,16 @@ public class IndexingIT {
                     "MINIO_ACCESS_KEY", "test",
                     "MINIO_SECRET_KEY", "testtest",
                     "MINIO_NOTIFY_WEBHOOK_ENABLE_zm", "on",
-                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm", "http://172.17.0.1:8080/index/webhook"))
+                    "MINIO_NOTIFY_WEBHOOK_ENDPOINT_zm", "http://" + getDockerHost() + ":8080/index/webhook"))
             .withCommand("server /data")
             .withExposedPorts(MINIO_PORT);
+
+    private static String getDockerHost() {
+        String os = System.getProperty("os.name", "generic");
+        // Works for macOs and should work for windows
+        // https://stackoverflow.com/a/40789612
+        return os.contains("nux") ? "172.17.0.1" : "host.docker.internal";
+    }
 
 
     private static final String ELASTICSEARCH_VERSION = "6.5.4";
