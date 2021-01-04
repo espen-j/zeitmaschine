@@ -10,8 +10,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import io.zeitmaschine.index.IndexerConfig;
-import io.zeitmaschine.index.IndexerHealthIndicator;
 import reactor.test.StepVerifier;
 
 @Testcontainers
@@ -38,10 +36,11 @@ class MinioHealthIndicatorTest {
 
     @Test
     void health() {
-        IndexerConfig config = new IndexerConfig();
+        S3Config config = new S3Config();
         config.setHost(minioHost);
-        StepVerifier.create(new IndexerHealthIndicator(config).health())
+        StepVerifier.create(new MinioHealthIndicator(config).health())
                 .expectNext(Health.up().build())
-                .expectComplete();
+                .expectComplete()
+                .verify();
     }
 }

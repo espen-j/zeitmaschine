@@ -29,7 +29,9 @@ public class IndexerHealthIndicator implements ReactiveHealthIndicator {
     public Mono<Health> health() {
         return webClient.get()
                 .uri("_cat/health")
-                .exchangeToMono(clientResponse -> Mono.just(Health.up().build()))
+                .retrieve()
+                .toBodilessEntity()
+                .map(response -> Health.up().build())
                 // do not error signal here. Would be correcter tho.. IMO
                 .onErrorResume(throwable -> Mono.just(Health.down().withException(throwable).build()));
     }

@@ -51,7 +51,8 @@ class IndexerTest {
         config.setHost(elasticHost);
         StepVerifier.create(new IndexerHealthIndicator(config).health())
                 .expectNext(Health.up().build())
-                .expectComplete();
+                .expectComplete()
+                .verify();
     }
 
     /* Naked elastic requests for creation and deletion of an index. */
