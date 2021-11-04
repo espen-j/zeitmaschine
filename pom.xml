@@ -79,7 +79,7 @@
             <version>2.6.0</version>
             <configuration>
               <from>
-                <image>gcr.io/distroless/java:11</image>
+                <image>eclipse-temurin:17</image>
               </from>
               <to>
                 <image>ghcr.io/espen-j/zeitmaschine/zeitmaschine:latest</image>
