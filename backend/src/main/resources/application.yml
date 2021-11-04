@@ -17,7 +17,7 @@ spring:
     security:
         oauth2:
             resourceserver:
-                id: http://localhost:8080/
+                id: https://zeitmaschine.eu.auth0.com/api/v2/
                 jwk:
                     jwk-set-uri: https://zeitmaschine.eu.auth0.com/.well-known/jwks.json
                     issuer-uri: https://zeitmaschine.eu.auth0.com/
