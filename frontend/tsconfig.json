@@ -4,6 +4,7 @@
     "module": "esnext",
     "strict": true,
     "strictFunctionTypes": false,
+    "strictNullChecks": false,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
