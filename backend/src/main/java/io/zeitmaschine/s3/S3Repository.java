@@ -148,13 +148,17 @@ public class S3Repository {
 
     }
 
-    public void put(String bucket, String key, Resource resource, String contentType) throws Exception {
-        minioClient.putObject(PutObjectArgs.builder()
-                .bucket(bucket)
-                .object(key)
-                .stream(resource.getInputStream(), resource.contentLength(), -1)
-                .contentType(contentType)
-                .build());
+    public void put(String bucket, String key, Resource resource, String contentType) {
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(key)
+                    .stream(resource.getInputStream(), resource.contentLength(), -1)
+                    .contentType(contentType)
+                    .build());
+        } catch (Exception e) {
+            throw new RuntimeException("Error while writing object '%s' to s3.".formatted(key), e);
+        }
     }
 
     /* This is a nasty function only used for indexing atm. Besides not scaling it needs

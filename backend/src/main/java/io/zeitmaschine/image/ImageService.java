@@ -1,16 +1,17 @@
 package io.zeitmaschine.image;
 
-import io.zeitmaschine.s3.S3Config;
-import io.zeitmaschine.s3.S3Repository;
+import java.nio.file.Paths;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
-import java.nio.file.Paths;
+import io.zeitmaschine.s3.S3Config;
+import io.zeitmaschine.s3.S3Repository;
+import reactor.core.publisher.Mono;
 
 @Service
 public class ImageService {
@@ -39,11 +40,7 @@ public class ImageService {
     }
 
     private void cache(String key, Resource thumbnail, Dimension dimension) {
-        try {
-            s3Repository.put(cacheBucket, getThumbName(key, dimension), thumbnail, MediaType.IMAGE_JPEG_VALUE);
-        } catch (Exception e) {
-            LOG.error("Failed to store scaled image to cache.", e);
-        }
+        s3Repository.put(cacheBucket, getThumbName(key, dimension), thumbnail, MediaType.IMAGE_JPEG_VALUE);
     }
 
     private static String getThumbName(String key, Dimension dimension) {

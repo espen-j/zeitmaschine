@@ -35,13 +35,7 @@ public class DemoInitializer {
         try (Stream<Path> paths = Files.walk(demoDir)) {
             paths
                     .filter(Files::isRegularFile)
-                    .forEach(path -> {
-                        try {
-                            repository.put(bucket, path.getFileName().toString(), new FileSystemResource(path), MediaType.IMAGE_JPEG_VALUE);
-                        } catch (Exception e) {
-                            e.printStackTrace(); // TODO RuntimeEx
-                        }
-                    });
+                    .forEach(path -> repository.put(bucket, path.getFileName().toString(), new FileSystemResource(path), MediaType.IMAGE_JPEG_VALUE));
         } catch (IOException e) {
             throw new RuntimeException("Error initializing demo content.", e);
         }
