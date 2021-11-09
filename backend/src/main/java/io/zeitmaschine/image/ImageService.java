@@ -2,8 +2,6 @@ package io.zeitmaschine.image;
 
 import java.nio.file.Paths;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -15,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class ImageService {
-    private final static Logger LOG = LoggerFactory.getLogger(ImageService.class.getName());
     private final String bucket;
     private final String cacheBucket;
 
