@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import io.zeitmaschine.s3.BucketHealthIndicator;
 import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Repository;
 
@@ -21,6 +22,9 @@ class DemoInitializerTest {
 
     @Mock
     private S3Repository s3Repository;
+
+    @Mock
+    private BucketHealthIndicator bucketHealthIndicator;
 
     @Test
     void bootstrap(@TempDir Path tempDir) throws Exception {
@@ -32,11 +36,11 @@ class DemoInitializerTest {
         S3Config config = new S3Config();
         config.setBucket("test");
 
-        DemoInitializer initializer = new DemoInitializer(s3Repository, config);
+        DemoInitializer initializer = new DemoInitializer(s3Repository, config, bucketHealthIndicator);
         initializer.demoDir = tempDir;
 
         // WHEN
-        initializer.bootstrapDemo();
+        initializer.bootstrap();
 
         // THEN
         verify(s3Repository, times(1)).put(eq("test"), eq(file.getFileName().toString()), any(Resource.class), any());

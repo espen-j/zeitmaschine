@@ -1,12 +1,16 @@
 package io.zeitmaschine.s3;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,11 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.SetBucketNotificationArgs;
 import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
 import io.minio.messages.EventType;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
@@ -55,6 +64,16 @@ public class S3Repository {
         log.info("s3 cache-bucket: {}", cacheBucket);
         log.info("s3 access key: {}", key);
         log.info("s3 webhook: {}", webhook);
+    }
+
+    public boolean health() {
+        try {
+            boolean bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+            boolean cacheExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(cacheBucket).build());
+            return bucketExists && cacheExists;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void initBucket() {
