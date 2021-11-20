@@ -19,7 +19,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/index")
-public class IndexEndpoint {
+public class  IndexEndpoint {
 
     private final S3Repository repository;
     private final Indexer indexer;
@@ -43,6 +43,17 @@ public class IndexEndpoint {
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/index")
+    public ResponseEntity<Void> index(@RequestBody String path) {
+
+        repository.get(path)
+                .map(entry -> indexer.toImage(entry.key(), entry.resource()))
+                .subscribe(image -> indexer.index(image));
+
+        return ResponseEntity.ok().build();
+    }
+
 
     @PostMapping("/reindex")
     public ResponseEntity<Void> reindex() {

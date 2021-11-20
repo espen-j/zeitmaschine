@@ -97,8 +97,8 @@ public class Indexer {
         initIndex();
 
         // re-index
-        repository.getImages()
-                .map(tuple -> toImage(tuple.name(), tuple.resource()))
+        repository.get("")
+                .map(entry -> toImage(entry.key(), entry.resource()))
                 .subscribe(image -> index(image));
     }
 

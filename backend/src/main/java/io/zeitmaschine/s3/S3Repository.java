@@ -1,16 +1,12 @@
 package io.zeitmaschine.s3;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -25,11 +21,6 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.SetBucketNotificationArgs;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.ServerException;
-import io.minio.errors.XmlParserException;
 import io.minio.messages.EventType;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
@@ -187,9 +178,9 @@ public class S3Repository {
      * exception: The indexing to elastic.
      *
      */
-    public Flux<Tuple> getImages() {
+    public Flux<Entry> get(String prefix) {
         try {
-            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).build()))
+            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).prefix(prefix).recursive(true).build()))
                     .map(itemResult -> {
                         try {
                             return itemResult.get();
@@ -198,33 +189,18 @@ public class S3Repository {
                         }
                     })
                     .flatMap(item -> get(bucket, item.objectName())
-                            .map(resource -> Tuple.from(item.objectName(), resource))
+                            .map(resource -> Entry.of(item.objectName(), resource))
                     );
         } catch (Exception e) {
-            log.error("Error fetching all objects from s3: " + e);
+            log.error("Error fetching objects with prefix '{}' from s3: ", prefix, e);
             return Flux.error(e);
         }
     }
 
-    public static class Tuple {
-        private String name;
-        private Resource resource;
+    public record Entry(String key, Resource resource) {
 
-        private Tuple(String name, Resource resource) {
-            this.name = name;
-            this.resource = resource;
-        }
-
-        public Resource resource() {
-            return resource;
-        }
-
-        public String name() {
-            return name;
-        }
-
-        private static Tuple from(String name, Resource resource) {
-            return new Tuple(name, resource);
+        public static Entry of(String key, Resource resource) {
+            return new Entry(key, resource);
         }
     }
 }
