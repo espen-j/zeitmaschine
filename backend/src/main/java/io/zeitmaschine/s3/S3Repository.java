@@ -137,12 +137,12 @@ public class S3Repository {
 
     }
 
-    public Mono<Resource> get(String bucket, String key) {
+    public Mono<S3Entry> get(String bucket, String key) {
         try (InputStream object = minioClient.getObject(GetObjectArgs.builder()
                 .bucket(bucket)
                 .object(key)
                 .build())) {
-            return Mono.just(new ByteArrayResource(object.readAllBytes()));
+            return Mono.just(S3Entry.of(key, new ByteArrayResource(object.readAllBytes())));
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().code()) {
             case "NoSuchKey":
@@ -178,7 +178,7 @@ public class S3Repository {
      * exception: The indexing to elastic.
      *
      */
-    public Flux<Entry> get(String prefix) {
+    public Flux<S3Entry> get(String prefix) {
         try {
             return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).prefix(prefix).recursive(true).build()))
                     .map(itemResult -> {
@@ -188,19 +188,11 @@ public class S3Repository {
                             throw new RuntimeException(e);
                         }
                     })
-                    .flatMap(item -> get(bucket, item.objectName())
-                            .map(resource -> Entry.of(item.objectName(), resource))
-                    );
+                    .flatMap(item -> get(bucket, item.objectName()));
         } catch (Exception e) {
             log.error("Error fetching objects with prefix '{}' from s3: ", prefix, e);
             return Flux.error(e);
         }
     }
 
-    public record Entry(String key, Resource resource) {
-
-        public static Entry of(String key, Resource resource) {
-            return new Entry(key, resource);
-        }
-    }
 }

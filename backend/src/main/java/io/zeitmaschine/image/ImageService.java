@@ -32,7 +32,7 @@ public class ImageService {
                 s3Repository.get(bucket, key)
                         // https://stackoverflow.com/questions/53595420/correct-way-of-throwing-exceptions-with-reactor
                         .switchIfEmpty(Mono.error(new RuntimeException(String.format("Resource found for '%s'.", key))))
-                        .flatMap(res -> operationService.resize(res, dimension))
+                        .flatMap(entry -> operationService.resize(entry.resource(), dimension))
                         .doOnSuccess(res -> cache(key, res, dimension))));
     }
 
@@ -45,6 +45,6 @@ public class ImageService {
     }
 
     private Mono<Resource> loadCached(String key, Dimension dimension) {
-        return s3Repository.get(cacheBucket, getThumbName(key, dimension));
+        return s3Repository.get(cacheBucket, getThumbName(key, dimension)).map(entry -> entry.resource());
     }
 }

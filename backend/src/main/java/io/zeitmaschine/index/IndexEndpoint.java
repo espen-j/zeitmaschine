@@ -39,7 +39,7 @@ public class  IndexEndpoint {
 
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key)
-                            .map(resource -> indexer.toImage(key, resource)))
+                            .map(entry -> indexer.toImage(entry.key(), entry.resource())))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
