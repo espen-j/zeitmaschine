@@ -25,7 +25,7 @@ class IndexerTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(IndexerTest.class.getName());
 
-    private static final String ELASTICSEARCH_VERSION = "6.5.4";
+    private static final String ELASTICSEARCH_VERSION = "7.14.2";
     private static final String ELASTIC_CONTAINER = "docker.elastic.co/elasticsearch/elasticsearch";
 
     private static final Integer ELASTIC_PORT = 9200;
