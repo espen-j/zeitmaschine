@@ -50,7 +50,7 @@ public class IndexingIT {
     private static MinioClient minioClient;
     private String bucket;
 
-    private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2020-10-09T22-55-05Z";
+    private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2021-11-05T09-16-26Z";
     private static final int MINIO_PORT = 9000;
 
     // Needs the host and port of the application: host.docker.internal:8080

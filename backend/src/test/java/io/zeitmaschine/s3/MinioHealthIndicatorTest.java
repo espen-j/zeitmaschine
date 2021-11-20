@@ -15,7 +15,7 @@ import reactor.test.StepVerifier;
 @Testcontainers
 class MinioHealthIndicatorTest {
 
-    private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2020-10-09T22-55-05Z";
+    private static final String MINIO_CONTAINER = "minio/minio:RELEASE.2021-11-05T09-16-26Z";
     private static final int MINIO_PORT = 9000;
 
     // will be shared between test methods
