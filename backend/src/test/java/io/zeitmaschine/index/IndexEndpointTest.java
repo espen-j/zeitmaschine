@@ -34,15 +34,16 @@ public class IndexEndpointTest {
 
         // GIVEN
         String prefix = "test";
+        String json = "{\"prefix\":\"" + prefix + "\"}";
         S3Entry entry = S3Entry.of(prefix + "/object123", mock(Resource.class));
         when(repository.get(prefix)).thenReturn(Flux.just(entry));
         when(indexer.toImage(any(), any())).thenReturn(mock(Image.class));
 
         // WHEN
         webClient.post()
-                .uri("/index/index")
+                .uri("/index/prefix")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(prefix))
+                .body(BodyInserters.fromValue(json))
                 .exchange()
                 .expectStatus().is2xxSuccessful();
 

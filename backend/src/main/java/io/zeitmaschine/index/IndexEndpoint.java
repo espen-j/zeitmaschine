@@ -4,6 +4,9 @@ import com.jayway.jsonpath.JsonPath;
 
 import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Repository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +22,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/index")
-public class  IndexEndpoint {
+public class IndexEndpoint {
+
+    private final static Logger LOG = LoggerFactory.getLogger(IndexEndpoint.class.getName());
 
     private final S3Repository repository;
     private final Indexer indexer;
@@ -44,10 +49,11 @@ public class  IndexEndpoint {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/index")
-    public ResponseEntity<Void> index(@RequestBody String path) {
-
-        repository.get(path)
+    @PostMapping("/prefix")
+    public ResponseEntity<Void> prefix(@RequestBody String json) {
+        String prefix = JsonPath.read(json, "$.prefix");
+        LOG.info("Indexing objects with prefix '{}'.", prefix);
+        repository.get(prefix)
                 .map(entry -> indexer.toImage(entry.key(), entry.resource()))
                 .subscribe(image -> indexer.index(image));
 
