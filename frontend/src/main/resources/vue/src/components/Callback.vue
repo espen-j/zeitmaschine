@@ -22,12 +22,30 @@ export default class Callback extends Vue {
     .container {
         display: flex;
         flex-wrap: wrap;
+
+        @media only screen and (min-width: 1440px) {
+            margin:0px auto;
+            width: 1440px;
+        }
     }
 
     .cell {
-        width: 25vw;
-        height: 25vw;
         flex: 0 1 auto;
+        width: 25vw;
+        height: auto;
+        aspect-ratio: 1 / 1;
+
+        @media only screen and (min-width: 768px) {
+          width: 20vw;
+        }
+
+        @media only screen and (min-width: 1042px) {
+          width: 12.5vw;
+        }
+
+        @media only screen and (min-width: 1440px) {
+          width: 12.5%;
+        }
 
         img {
             width: 100%;
