@@ -1,6 +1,7 @@
 package io.zeitmaschine.index;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
@@ -105,10 +106,10 @@ public class Indexer {
     Image toImage(String key, Resource resource) {
 
         // FIXME contenttype not checked!
-        try {
+        try (InputStream inputStream = resource.getInputStream()) {
             Image.Builder builder = Image.from(key);
 
-            Metadata metadata = ImageMetadataReader.readMetadata(resource.getInputStream());
+            Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
             Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
             subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
 

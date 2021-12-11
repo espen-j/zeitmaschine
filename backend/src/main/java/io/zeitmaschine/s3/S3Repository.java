@@ -7,7 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -142,7 +142,7 @@ public class S3Repository {
                 .bucket(bucket)
                 .object(key)
                 .build())) {
-            return Mono.just(S3Entry.of(key, new ByteArrayResource(object.readAllBytes())));
+            return Mono.just(S3Entry.of(key, new InputStreamResource(object)));
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().code()) {
             case "NoSuchKey":
@@ -180,7 +180,12 @@ public class S3Repository {
      */
     public Flux<S3Entry> get(String prefix) {
         try {
-            return Flux.fromIterable(minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).prefix(prefix).recursive(true).build()))
+            ListObjectsArgs listArgs = ListObjectsArgs.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build();
+            return Flux.fromIterable(minioClient.listObjects(listArgs))
                     .map(itemResult -> {
                         try {
                             return itemResult.get();
