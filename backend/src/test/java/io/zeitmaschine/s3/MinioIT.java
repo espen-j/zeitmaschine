@@ -1,12 +1,19 @@
 package io.zeitmaschine.s3;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -16,6 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import io.zeitmaschine.TestImagesProvider;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 @Testcontainers
@@ -96,6 +104,28 @@ public class MinioIT {
         StepVerifier.create(s3Repository.get(config.getBucket(), nonPrefixedName))
                 .expectNextMatches(entry -> entry.key().equals(nonPrefixedName))
                 .verifyComplete();
+    }
+
+    @Test
+    public void getAll() {
+
+        // GIVEN
+        byte[] bytes = new byte[1024*1000];
+        new Random().nextBytes(bytes);
+        int elements = 50;
+        Flux.range(0, elements)
+                .map(count -> S3Entry.of(String.valueOf(count), new ByteArrayResource(bytes)))
+                .log()
+                .subscribe(entry -> s3Repository.put(config.getBucket(), entry.key(), entry.resource(), MediaType.APPLICATION_OCTET_STREAM_VALUE));
+
+        // WHEN - THEN
+        List<Integer> expected = IntStream.range(0, elements).boxed().collect(Collectors.toList());
+        StepVerifier.create(s3Repository.get(""))
+                .thenConsumeWhile(entry -> expected.remove(Integer.valueOf(entry.key())))
+                .verifyComplete();
+
+        assertTrue(expected.isEmpty());
+
     }
 }
 
