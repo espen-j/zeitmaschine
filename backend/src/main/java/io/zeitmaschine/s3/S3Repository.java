@@ -3,6 +3,7 @@ package io.zeitmaschine.s3;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +21,11 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.SetBucketNotificationArgs;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.EventType;
+import io.minio.messages.Item;
 import io.minio.messages.NotificationConfiguration;
 import io.minio.messages.QueueConfiguration;
 import reactor.core.publisher.Flux;
@@ -138,11 +142,14 @@ public class S3Repository {
     }
 
     public Mono<S3Entry> get(String bucket, String key) {
-        try (InputStream object = minioClient.getObject(GetObjectArgs.builder()
+        StatObjectArgs stat = StatObjectArgs.builder()
                 .bucket(bucket)
                 .object(key)
-                .build())) {
-            return Mono.just(S3Entry.of(key, new InputStreamResource(object)));
+                .build();
+        try {
+            StatObjectResponse response = minioClient.statObject(stat);
+            return Mono.just(S3Entry.of(key, response.size(), getResourceSupplier(bucket, key)));
+
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().code()) {
             case "NoSuchKey":
@@ -155,7 +162,6 @@ public class S3Repository {
         } catch (Exception e) {
             throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
         }
-
     }
 
     public void put(String bucket, String key, Resource resource, String contentType) {
@@ -188,16 +194,29 @@ public class S3Repository {
             return Flux.fromIterable(minioClient.listObjects(listArgs))
                     .map(itemResult -> {
                         try {
-                            return itemResult.get();
+                            Item item = itemResult.get();
+                            return S3Entry.of(item.objectName(), item.size(), getResourceSupplier(bucket, key));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                    })
-                    .flatMap(item -> get(bucket, item.objectName()));
+                    });
         } catch (Exception e) {
             log.error("Error fetching objects with prefix '{}' from s3: ", prefix, e);
             return Flux.error(e);
         }
     }
 
+    private Supplier<Resource> getResourceSupplier(String bucket, String key) {
+        return () -> {
+            try {
+                InputStream i = minioClient.getObject(GetObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(key)
+                        .build());
+                return new InputStreamResource(i);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
 }

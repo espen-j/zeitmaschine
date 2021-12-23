@@ -35,7 +35,7 @@ public class IndexEndpointTest {
         // GIVEN
         String prefix = "test";
         String json = "{\"prefix\":\"" + prefix + "\"}";
-        S3Entry entry = S3Entry.of(prefix + "/object123", mock(Resource.class));
+        S3Entry entry = S3Entry.of(prefix + "/object123", 123, () -> mock(Resource.class));
         when(repository.get(prefix)).thenReturn(Flux.just(entry));
         when(indexer.toImage(any(), any())).thenReturn(mock(Image.class));
 

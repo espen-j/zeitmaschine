@@ -99,7 +99,7 @@ public class Indexer {
 
         // re-index
         repository.get("")
-                .map(entry -> toImage(entry.key(), entry.resource()))
+                .map(entry -> toImage(entry.key(), entry.resourceSupplier().get()))
                 .subscribe(image -> index(image));
     }
 

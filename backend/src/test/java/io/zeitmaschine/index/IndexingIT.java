@@ -146,6 +146,7 @@ public class IndexingIT {
                 .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE) // elastic returns deprecated content type still
                 .expectBody()
                 .jsonPath("$.hits.hits").isArray()
+
                 .jsonPath("$.hits.hits[0]._source.name").isEqualTo("IMG_20181001_185137.jpg");
         // body example: {"took":90,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":1,"max_score":1.0,"hits":[{"_index":"zeitmaschine","_type":"image","_id":"_QwYxHYBXRNBi9tRsreb","_score":1.0,"_source":{"name":"404_resized.jpg","created":null,"location":null}}]}}
 

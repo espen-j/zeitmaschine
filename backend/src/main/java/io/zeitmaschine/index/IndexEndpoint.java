@@ -44,7 +44,7 @@ public class IndexEndpoint {
 
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key)
-                            .map(entry -> indexer.toImage(entry.key(), entry.resource())))
+                            .map(entry -> indexer.toImage(entry.key(), entry.resourceSupplier().get())))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
@@ -54,7 +54,7 @@ public class IndexEndpoint {
         String prefix = JsonPath.read(json, "$.prefix");
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
-                .map(entry -> indexer.toImage(entry.key(), entry.resource()))
+                .map(entry -> indexer.toImage(entry.key(), entry.resourceSupplier().get()))
                 .subscribe(image -> indexer.index(image));
 
         return ResponseEntity.ok().build();

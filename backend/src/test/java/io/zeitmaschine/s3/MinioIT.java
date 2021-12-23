@@ -36,7 +36,7 @@ public class MinioIT {
     // Hence DEFINED_PORT needed for this test.
     // Chicken egg problem.
     @Container
-    private static GenericContainer minioContainer = new GenericContainer(DockerImageName.parse(MINIO_CONTAINER))
+    private GenericContainer minioContainer = new GenericContainer(DockerImageName.parse(MINIO_CONTAINER))
             .withEnv(Map.of(
                     "MINIO_ACCESS_KEY", "test",
                     "MINIO_SECRET_KEY", "testtest"))
@@ -114,9 +114,9 @@ public class MinioIT {
         new Random().nextBytes(bytes);
         int elements = 50;
         Flux.range(0, elements)
-                .map(count -> S3Entry.of(String.valueOf(count), new ByteArrayResource(bytes)))
+                .map(count -> S3Entry.of(String.valueOf(count), bytes.length, () -> new ByteArrayResource(bytes)))
                 .log()
-                .subscribe(entry -> s3Repository.put(config.getBucket(), entry.key(), entry.resource(), MediaType.APPLICATION_OCTET_STREAM_VALUE));
+                .subscribe(entry -> s3Repository.put(config.getBucket(), entry.key(), entry.resourceSupplier().get(), MediaType.APPLICATION_OCTET_STREAM_VALUE));
 
         // WHEN - THEN
         List<Integer> expected = IntStream.range(0, elements).boxed().collect(Collectors.toList());
