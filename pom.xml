@@ -21,8 +21,9 @@
     <java.version>17</java.version>
     <minio.version>8.3.4</minio.version>
     <spring-cloud.version>2021.0.0</spring-cloud.version>
-    <maven.deploy.skip>true</maven.deploy.skip>
 
+    <!-- Deploy to GH packages - parent pom needed as well -->
+    <maven.deploy.skip>false</maven.deploy.skip>
     <!-- Overrides Spring boot managed, for minio -->
     <okhttp3.version>4.9.2</okhttp3.version>
   </properties>
