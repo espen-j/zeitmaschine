@@ -104,7 +104,7 @@ public class ImagingIT {
 
 
     @BeforeEach
-    void setUp() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, ErrorResponseException {
+    void setUp() throws IOException, InvalidKeyException, InvalidResponseException, InsufficientDataException, NoSuchAlgorithmException, ServerException, InternalException, XmlParserException, ErrorResponseException, InterruptedException {
 
         minioClient = MinioClient.builder()
                 .endpoint(config.getHost())
@@ -114,6 +114,8 @@ public class ImagingIT {
 
         this.bucket = config.getBucket();
         this.cacheBucket = config.getCacheBucket();
+
+        Thread.sleep(3000); // TODO: poll and parse /.health endpoint instead!
 
         // Created in S3Repository
         if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()) ||
