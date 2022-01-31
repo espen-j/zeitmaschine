@@ -206,6 +206,9 @@ public class S3Repository {
         }
     }
 
+    /*
+    Supplier to fetch the remote S3 object on demand.
+     */
     private Supplier<Resource> getResourceSupplier(String bucket, String key) {
         return () -> {
             try {
@@ -214,6 +217,11 @@ public class S3Repository {
                         .object(key)
                         .build());
                 return new InputStreamResource(i);
+                // Alternatively: new org.springframework.core.io.ByteArrayResource(i.readAllBytes());
+                // Not sure what's smarter: InputStream is one use and throw away, afterwards it has to go over the wire.
+                // OTOH InputStream should be able to start processing further while it's being downloaded. Plus lower
+                // memory usage?
+                // As long as it's used only one time, this is better I guess. Don't forget to close the stream!
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
