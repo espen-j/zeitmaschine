@@ -1,10 +1,12 @@
 package io.zeitmaschine.index;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jayway.jsonpath.JsonPath;
 
 import io.zeitmaschine.s3.S3Config;
+import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
 
@@ -29,6 +32,7 @@ public class IndexEndpoint {
     private final S3Repository repository;
     private final Indexer indexer;
     private final String bucket;
+    private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE);
 
     @Autowired
     public IndexEndpoint(S3Repository repository, S3Config config, Indexer indexer) {
@@ -44,7 +48,7 @@ public class IndexEndpoint {
 
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key))
-                .filter(s3Entry -> !s3Entry.contentType().equals("MediaType.IMAGE_JPEG_VALUE"))
+                .filter(contentTypeFilter)
                 .map(entry -> indexer.toImage(entry))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
@@ -55,7 +59,7 @@ public class IndexEndpoint {
         String prefix = JsonPath.read(json, "$.prefix");
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
-                .filter(s3Entry -> !s3Entry.contentType().equals("MediaType.IMAGE_JPEG_VALUE"))
+                .filter(contentTypeFilter)
                 .map(entry -> indexer.toImage(entry))
                 .subscribe(image -> indexer.index(image));
 
