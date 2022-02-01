@@ -35,6 +35,7 @@ import reactor.core.publisher.Mono;
 public class S3Repository {
 
     private final static Logger log = LoggerFactory.getLogger(S3Repository.class.getName());
+    public static final String UNKNOWN_CONTENT_TYPE = "unknown";
 
     private final String host;
     private final String bucket;
@@ -148,7 +149,8 @@ public class S3Repository {
                 .build();
         try {
             StatObjectResponse response = minioClient.statObject(stat);
-            return Mono.just(S3Entry.of(key, response.size(), getResourceSupplier(bucket, key)));
+            String contentType = response.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
+            return Mono.just(S3Entry.of(key, contentType, response.size(), getResourceSupplier(bucket, key)));
 
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().code()) {
@@ -190,16 +192,19 @@ public class S3Repository {
                     .bucket(bucket)
                     .prefix(prefix)
                     .recursive(true)
+                    .includeUserMetadata(true)
                     .build();
             return Flux.fromIterable(minioClient.listObjects(listArgs))
-                    .map(itemResult -> {
+                    .flatMap(itemResult -> {
                         try {
                             Item item = itemResult.get();
-                            return S3Entry.of(item.objectName(), item.size(), getResourceSupplier(bucket, key));
+                            String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
+                            return Mono.just(S3Entry.of(item.objectName(), contentType, item.size(), getResourceSupplier(bucket, key)));
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            return Mono.error(new RuntimeException("", e));
                         }
-                    });
+                    })
+                    .onErrorContinue((throwable, o) -> log.error("Failed to get result from minio object.", throwable));
         } catch (Exception e) {
             log.error("Error fetching objects with prefix '{}' from s3: ", prefix, e);
             return Flux.error(e);

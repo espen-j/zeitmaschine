@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +27,7 @@ import com.drew.metadata.exif.GpsDirectory;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 
+import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 
 @Service
@@ -99,15 +99,16 @@ public class Indexer {
 
         // re-index
         repository.get("")
-                .map(entry -> toImage(entry.key(), entry.resourceSupplier().get()))
+                .filter(s3Entry -> !s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE))
+                .map(entry -> toImage(entry))
                 .subscribe(image -> index(image));
     }
 
-    Image toImage(String key, Resource resource) {
+    Image toImage(S3Entry s3Entry) {
 
         // FIXME contenttype not checked!
-        try (InputStream inputStream = resource.getInputStream()) {
-            Image.Builder builder = Image.from(key);
+        try (InputStream inputStream = s3Entry.resourceSupplier().get().getInputStream()) {
+            Image.Builder builder = Image.from(s3Entry.key());
 
             Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
             Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
@@ -124,4 +125,5 @@ public class Indexer {
             throw new RuntimeException("Error reading metadata from image.", e);
         }
     }
+
 }

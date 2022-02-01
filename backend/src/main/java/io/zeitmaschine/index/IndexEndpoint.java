@@ -1,9 +1,6 @@
 package io.zeitmaschine.index;
 
-import com.jayway.jsonpath.JsonPath;
-
-import io.zeitmaschine.s3.S3Config;
-import io.zeitmaschine.s3.S3Repository;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 
-import java.util.List;
+import com.jayway.jsonpath.JsonPath;
+
+import io.zeitmaschine.s3.S3Config;
+import io.zeitmaschine.s3.S3Repository;
+import reactor.core.publisher.Flux;
 
 /**
  * Index endpoint for s3 to notify and trigger a manual reindexing.
@@ -43,8 +43,9 @@ public class IndexEndpoint {
         List<String> keys = JsonPath.read(json, "$.Records[*].s3.object.key");
 
         Flux.fromIterable(keys)
-                .flatMap(key -> repository.get(bucket, key)
-                            .map(entry -> indexer.toImage(entry.key(), entry.resourceSupplier().get())))
+                .flatMap(key -> repository.get(bucket, key))
+                .filter(s3Entry -> !s3Entry.contentType().equals("MediaType.IMAGE_JPEG_VALUE"))
+                .map(entry -> indexer.toImage(entry))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
@@ -54,7 +55,8 @@ public class IndexEndpoint {
         String prefix = JsonPath.read(json, "$.prefix");
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
-                .map(entry -> indexer.toImage(entry.key(), entry.resourceSupplier().get()))
+                .filter(s3Entry -> !s3Entry.contentType().equals("MediaType.IMAGE_JPEG_VALUE"))
+                .map(entry -> indexer.toImage(entry))
                 .subscribe(image -> indexer.index(image));
 
         return ResponseEntity.ok().build();
