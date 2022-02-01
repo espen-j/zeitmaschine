@@ -202,7 +202,7 @@ public class S3Repository {
                             String objectKey = item.objectName();
                             return Mono.just(S3Entry.of(objectKey, contentType, item.size(), getResourceSupplier(bucket, objectKey)));
                         } catch (Exception e) {
-                            return Mono.error(new RuntimeException("", e));
+                            return Mono.error(e);
                         }
                     })
                     .onErrorContinue((throwable, o) -> log.error("Failed to get result from minio object.", throwable));
