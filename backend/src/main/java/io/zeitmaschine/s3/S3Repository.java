@@ -199,7 +199,8 @@ public class S3Repository {
                         try {
                             Item item = itemResult.get();
                             String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
-                            return Mono.just(S3Entry.of(item.objectName(), contentType, item.size(), getResourceSupplier(bucket, key)));
+                            String objectKey = item.objectName();
+                            return Mono.just(S3Entry.of(objectKey, contentType, item.size(), getResourceSupplier(bucket, objectKey)));
                         } catch (Exception e) {
                             return Mono.error(new RuntimeException("", e));
                         }
