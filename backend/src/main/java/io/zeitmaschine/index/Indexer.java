@@ -88,12 +88,7 @@ public class Indexer {
         }
     }
 
-    public void reindex() {
-
-        // TODO delete index - fails when no such index
-        LOG.info("Recreating index '{}'.", indexUrl);
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(indexUrl);
+    public void index() {
 
         initIndex();
 
@@ -102,6 +97,12 @@ public class Indexer {
                 .filter(s3Entry -> !s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE))
                 .map(entry -> toImage(entry))
                 .subscribe(image -> index(image));
+    }
+
+    public void wipe() {
+        LOG.info("Deleting index '{}'.", indexUrl);
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.delete(indexUrl);
     }
 
     Image toImage(S3Entry s3Entry) {
@@ -125,5 +126,4 @@ public class Indexer {
             throw new RuntimeException("Error reading metadata from image.", e);
         }
     }
-
 }

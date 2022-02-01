@@ -62,12 +62,15 @@ public class IndexEndpoint {
         return ResponseEntity.ok().build();
     }
 
-
-    @PostMapping("/reindex")
-    public ResponseEntity<Void> reindex() {
-        indexer.reindex();
+    @PostMapping("/index")
+    public ResponseEntity<Void> index() {
+        indexer.index();
         return ResponseEntity.ok().build();
     }
 
-
+    @PostMapping("/wipe")
+    public ResponseEntity<Void> wipe() {
+        indexer.wipe();
+        return ResponseEntity.ok().build();
+    }
 }
