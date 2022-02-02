@@ -1,0 +1,29 @@
+name: Cleanup packages
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/delete-package-versions@v2
+        with:
+          package-name: 'io.zeitmaschine.zeitmaschine-project'
+          min-versions-to-keep: 5
+          delete-only-pre-release-versions: "true"
+          num-old-versions-to-delete: 0
+      - uses: actions/delete-package-versions@v2
+        with:
+          package-name: 'io.zeitmaschine.zeitmaschine-frontend'
+          min-versions-to-keep: 5
+          delete-only-pre-release-versions: "true"
+          num-old-versions-to-delete: 0
+      - uses: actions/delete-package-versions@v2
+        with:
+          package-name: 'io.zeitmaschine.zeitmaschine'
+          min-versions-to-keep: 5
+          delete-only-pre-release-versions: "true"
+          num-old-versions-to-delete: 0
