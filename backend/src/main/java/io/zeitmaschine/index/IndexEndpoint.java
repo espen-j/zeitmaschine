@@ -33,7 +33,15 @@ public class IndexEndpoint {
     private final S3Repository repository;
     private final Indexer indexer;
     private final String bucket;
-    private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE);
+
+    private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> {
+        String contentType = s3Entry.contentType();
+        boolean isJpeg = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
+        if (!isJpeg) {
+            LOG.info("Filtering '{}' with content-type '{}'.", s3Entry.key(), contentType);
+        }
+        return isJpeg;
+    };
 
     @Autowired
     public IndexEndpoint(S3Repository repository, S3Config config, Indexer indexer) {
