@@ -183,12 +183,11 @@ public class S3Repository {
         }
     }
 
-    /* This is a nasty function only used for indexing atm. Besides not scaling it needs
-     * a hackish Tuple object to transport the key and resource.
-     * The problem is that this application does not serve the JSON object to the client, elastic
-     * does. So most methods related to images only need the raw image blob. This method serves the only
-     * exception: The indexing to elastic.
+    /**
+     * Fetches all objects from the bucket with the according prefix. Empty "" prefix will fetch all objects.
+     * This will not retrieve the binary itself, only the object's metadata.
      *
+     * @param prefix E.g. the folder name.
      */
     public Flux<S3Entry> get(String prefix) {
         try {
