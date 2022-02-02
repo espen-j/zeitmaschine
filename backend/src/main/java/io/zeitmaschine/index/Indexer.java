@@ -80,7 +80,7 @@ public class Indexer {
             HttpEntity<Image> request = new HttpEntity<>(image);
             URI uri = restTemplate.postForLocation(resourceUrl, request);
 
-            LOG.info("Image successfully indexed: {}", uri.toString());
+            LOG.info("Image '{}' successfully indexed: {}", image.getName(), uri.toString());
         } catch (RestClientException e) {
             LOG.error("Failed to index image '{}'.", image.getName(), e);
         }
