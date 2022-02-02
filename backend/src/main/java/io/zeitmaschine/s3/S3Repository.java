@@ -40,8 +40,6 @@ public class S3Repository {
     private final String host;
     private final String bucket;
     private final String cacheBucket;
-    private final String key;
-    private final String secret;
     private final boolean webhook;
 
     private MinioClient minioClient;
@@ -49,17 +47,22 @@ public class S3Repository {
     @Autowired
     public S3Repository(S3Config config) {
         this.host = config.getHost();
-        this.key = config.getAccess().getKey();
-        this.secret = config.getAccess().getSecret();
         this.webhook = config.isWebhook();
         this.bucket = config.getBucket();
         this.cacheBucket = config.getCacheBucket();
+
+        String key = config.getAccess().getKey();
+        String secret = config.getAccess().getSecret();
 
         log.info("s3 host: {}", host);
         log.info("s3 bucket: {}", bucket);
         log.info("s3 cache-bucket: {}", cacheBucket);
         log.info("s3 access key: {}", key);
         log.info("s3 webhook: {}", webhook);
+
+        this.minioClient = MinioClient.builder()
+                .endpoint(host)
+                .credentials(key, secret).build();
     }
 
     public boolean health() {
@@ -73,7 +76,6 @@ public class S3Repository {
     }
 
     public void initBucket() {
-        this.minioClient = MinioClient.builder().endpoint(host).credentials(key, secret).build();
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
