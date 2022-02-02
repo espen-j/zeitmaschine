@@ -149,7 +149,9 @@ public class S3Repository {
                 .build();
         try {
             StatObjectResponse response = minioClient.statObject(stat);
-            String contentType = response.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
+            // mark the difference to io.zeitmaschine.s3.S3Repository.get(java.lang.String)
+            // userMetaData and response are different in these two cases.
+            String contentType = response.contentType();
             return Mono.just(S3Entry.of(key, contentType, response.size(), getResourceSupplier(bucket, key)));
 
         } catch (ErrorResponseException e) {
