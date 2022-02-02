@@ -23,6 +23,6 @@ jobs:
     - name: Run integration tests
       run: mvn clean verify -U -Pintegration-tests
     - name: Deploy maven artifact and container
-      run: mvn deploy jib:build -Djib.to.auth.username=espen-j -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }}
+      run: mvn deploy -DskipTests jib:build -Djib.to.auth.username=espen-j -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
