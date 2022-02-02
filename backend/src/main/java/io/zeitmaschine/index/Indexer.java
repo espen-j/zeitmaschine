@@ -28,7 +28,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 
 import io.zeitmaschine.s3.S3Entry;
-import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -41,12 +40,10 @@ public class Indexer {
     private final String resourceUrl;
     private final WebClient webClient;
 
-    private S3Repository repository;
     private RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
-    public Indexer(S3Repository repository, IndexerConfig config) {
-        this.repository = repository;
+    public Indexer(IndexerConfig config) {
         this.index = config.getIndex();
         this.indexesUrl = String.format("%s/_all", config.getHost());
         this.indexUrl = String.format("%s/%s", config.getHost(), config.getIndex());
@@ -87,17 +84,6 @@ public class Indexer {
         } catch (RestClientException e) {
             LOG.error("Failed to index image '{}'.", image.getName(), e);
         }
-    }
-
-    public void index() {
-
-        initIndex();
-
-        // re-index
-        repository.get("")
-                .filter(s3Entry -> !s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE))
-                .flatMap(entry -> toImage(entry))
-                .subscribe(image -> index(image));
     }
 
     public void wipe() {

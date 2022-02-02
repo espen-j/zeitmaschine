@@ -72,9 +72,9 @@ public class IndexEndpoint {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/index")
+    @PostMapping("/init")
     public ResponseEntity<Void> index() {
-        indexer.index();
+        indexer.initIndex();
         return ResponseEntity.ok().build();
     }
 
