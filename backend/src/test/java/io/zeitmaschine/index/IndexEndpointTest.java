@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @SpringBootTest
 @AutoConfigureWebTestClient
@@ -37,7 +38,7 @@ public class IndexEndpointTest {
         String json = "{\"prefix\":\"" + prefix + "\"}";
         S3Entry entry = S3Entry.of(prefix + "/object123", MediaType.IMAGE_JPEG_VALUE, 123, () -> mock(Resource.class));
         when(repository.get(prefix)).thenReturn(Flux.just(entry));
-        when(indexer.toImage(any(S3Entry.class))).thenReturn(mock(Image.class));
+        when(indexer.toImage(any(S3Entry.class))).thenReturn(Mono.just(mock(Image.class)));
 
         // WHEN
         webClient.post()

@@ -29,6 +29,7 @@ import com.jayway.jsonpath.ReadContext;
 
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
+import reactor.core.publisher.Mono;
 
 @Service
 public class Indexer {
@@ -95,7 +96,7 @@ public class Indexer {
         // re-index
         repository.get("")
                 .filter(s3Entry -> !s3Entry.contentType().equals(MediaType.IMAGE_JPEG_VALUE))
-                .map(entry -> toImage(entry))
+                .flatMap(entry -> toImage(entry))
                 .subscribe(image -> index(image));
     }
 
@@ -105,7 +106,7 @@ public class Indexer {
         restTemplate.delete(indexUrl);
     }
 
-    Image toImage(S3Entry s3Entry) {
+    Mono<Image> toImage(S3Entry s3Entry) {
 
         // FIXME contenttype not checked!
         try (InputStream inputStream = s3Entry.resourceSupplier().get().getInputStream()) {
@@ -121,9 +122,9 @@ public class Indexer {
                 if (geoLocation != null)
                     builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
             });
-            return builder.build();
+            return Mono.just(builder.build());
         } catch (IOException | ImageProcessingException e) {
-            throw new RuntimeException("Error reading metadata from image.", e);
+            return Mono.error(e);
         }
     }
 }

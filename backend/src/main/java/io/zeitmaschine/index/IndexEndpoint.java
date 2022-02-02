@@ -19,6 +19,7 @@ import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Index endpoint for s3 to notify and trigger a manual reindexing.
@@ -41,6 +42,7 @@ public class IndexEndpoint {
         this.bucket = config.getBucket();
     }
 
+    // TODO: publish to stream
     @PostMapping("/webhook")
     public ResponseEntity<Void> notify(@RequestBody String json) {
 
@@ -49,7 +51,9 @@ public class IndexEndpoint {
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key))
                 .filter(contentTypeFilter)
-                .map(entry -> indexer.toImage(entry))
+                .flatMap(entry -> indexer.toImage(entry)
+                        .doOnError(ex -> LOG.error("Failed to process image.", ex))
+                        .onErrorResume(ex -> Mono.empty()))
                 .subscribe(image -> indexer.index(image));
         return ResponseEntity.ok().build();
     }
@@ -60,7 +64,9 @@ public class IndexEndpoint {
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
                 .filter(contentTypeFilter)
-                .map(entry -> indexer.toImage(entry))
+                .flatMap(entry -> indexer.toImage(entry)
+                        .doOnError(ex -> LOG.error("Failed to process image.", ex))
+                        .onErrorResume(ex -> Mono.empty()))
                 .subscribe(image -> indexer.index(image));
 
         return ResponseEntity.ok().build();
