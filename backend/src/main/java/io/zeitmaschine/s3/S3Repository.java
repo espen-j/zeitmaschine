@@ -20,6 +20,7 @@ import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.Result;
 import io.minio.SetBucketNotificationArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
@@ -198,25 +199,30 @@ public class S3Repository {
                     .includeUserMetadata(true)
                     .build();
             return Flux.fromIterable(minioClient.listObjects(listArgs))
-                    .flatMap(itemResult -> {
-                        try {
-                            Item item = itemResult.get();
-                            String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
-                            String objectKey = item.objectName();
-                            return Mono.just(S3Entry.of(objectKey, contentType, item.size(), getResourceSupplier(bucket, objectKey)));
-                        } catch (Exception e) {
-                            return Mono.error(e);
-                        }
-                    })
-                    .onErrorContinue((throwable, o) -> log.error("Failed to get result from minio object.", throwable));
+                    .flatMap(itemResult -> toS3Entry(itemResult)
+                            .doOnError(ex -> log.error("Failed to process image.", ex))
+                            .onErrorResume(ex -> Mono.empty()));
         } catch (Exception e) {
             log.error("Error fetching objects with prefix '{}' from s3: ", prefix, e);
             return Flux.error(e);
         }
     }
 
+    // TODO: Function field?
+    private Mono<S3Entry> toS3Entry(Result<Item> itemResult) {
+        try {
+            Item item = itemResult.get();
+            String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
+            String objectKey = item.objectName();
+            return Mono.just(S3Entry.of(objectKey, contentType, item.size(), getResourceSupplier(bucket, objectKey)));
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
+    }
+
     /*
     Supplier to fetch the remote S3 object on demand.
+    TODO: Supplier field?
      */
     private Supplier<Resource> getResourceSupplier(String bucket, String key) {
         return () -> {
