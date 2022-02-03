@@ -13,10 +13,12 @@
   <groupId>io.zeitmaschine</groupId>
   <artifactId>zeitmaschine-project</artifactId>
   <packaging>pom</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>${revision}</version>
   <name>zeitmaschine-project</name>
 
   <properties>
+    <sha1>SNAPSHOT</sha1>
+    <revision>1.0-${sha1}</revision>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <minio.version>8.3.4</minio.version>
