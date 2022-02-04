@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import io.zeitmaschine.s3.Processor;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
@@ -38,7 +39,7 @@ public class IndexEndpointTest {
         String json = "{\"prefix\":\"" + prefix + "\"}";
         S3Entry entry = S3Entry.of(prefix + "/object123", MediaType.IMAGE_JPEG_VALUE, 123, () -> mock(Resource.class));
         when(repository.get(prefix)).thenReturn(Flux.just(entry));
-        when(indexer.toImage(any(S3Entry.class))).thenReturn(Mono.just(mock(Image.class)));
+        when(Processor.metaData(any(S3Entry.class))).thenReturn(Mono.just(mock(Image.class)));
 
         // WHEN
         webClient.post()

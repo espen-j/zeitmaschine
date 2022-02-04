@@ -1,10 +1,7 @@
 package io.zeitmaschine.index;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +15,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
-import com.drew.lang.GeoLocation;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
-import com.drew.metadata.exif.GpsDirectory;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
-
-import io.zeitmaschine.s3.S3Entry;
-import reactor.core.publisher.Mono;
 
 @Service
 public class Indexer {
@@ -90,27 +78,5 @@ public class Indexer {
         LOG.info("Deleting index '{}'.", indexUrl);
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.delete(indexUrl);
-    }
-
-    Mono<Image> toImage(S3Entry s3Entry) {
-
-        // FIXME contenttype not checked!
-        try (InputStream inputStream = s3Entry.resourceSupplier().get().getInputStream()) {
-            Image.Builder builder = Image.from(s3Entry.key());
-
-            Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
-            Optional<ExifSubIFDDirectory> subIFDDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class));
-            subIFDDirectory.ifPresent(subIFD -> builder.createDate(subIFD.getDateOriginal()));
-
-            Optional<GpsDirectory> gpsDirectory = Optional.ofNullable(metadata.getFirstDirectoryOfType(GpsDirectory.class));
-            gpsDirectory.ifPresent(gps -> {
-                GeoLocation geoLocation = gps.getGeoLocation();
-                if (geoLocation != null)
-                    builder.location(geoLocation.getLatitude(), geoLocation.getLongitude());
-            });
-            return Mono.just(builder.build());
-        } catch (IOException | ImageProcessingException e) {
-            return Mono.error(e);
-        }
     }
 }

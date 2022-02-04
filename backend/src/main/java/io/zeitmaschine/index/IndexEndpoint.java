@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jayway.jsonpath.JsonPath;
 
+import io.zeitmaschine.s3.Processor;
 import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
@@ -59,7 +60,7 @@ public class IndexEndpoint {
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key))
                 .filter(contentTypeFilter)
-                .flatMap(entry -> indexer.toImage(entry)
+                .flatMap(entry -> Processor.metaData(entry)
                         .doOnError(ex -> LOG.error("Failed to process image.", ex))
                         .onErrorResume(ex -> Mono.empty()))
                 .subscribe(image -> indexer.index(image));
@@ -72,7 +73,7 @@ public class IndexEndpoint {
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
                 .filter(contentTypeFilter)
-                .flatMap(entry -> indexer.toImage(entry)
+                .flatMap(entry -> Processor.metaData(entry)
                         .doOnError(ex -> LOG.error("Failed to process image.", ex))
                         .onErrorResume(ex -> Mono.empty()))
                 .subscribe(image -> indexer.index(image));
