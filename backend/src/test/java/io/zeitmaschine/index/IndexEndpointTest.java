@@ -35,7 +35,11 @@ public class IndexEndpointTest {
         // GIVEN
         String prefix = "test";
         String json = "{\"prefix\":\"" + prefix + "\"}";
-        S3Entry entry = S3Entry.of(prefix + "/object123", MediaType.IMAGE_JPEG_VALUE, 123, () -> new ClassPathResource("images/IMG_20161208_024708.jpg"));
+        S3Entry entry = S3Entry.builder().key(prefix + "/object123")
+                .contentType(MediaType.IMAGE_JPEG_VALUE)
+                .size(123)
+                .resourceSupplier(() -> new ClassPathResource("images/IMG_20161208_024708.jpg"))
+                .build();
         when(repository.get(prefix)).thenReturn(Flux.just(entry));
 
         // WHEN
@@ -48,6 +52,6 @@ public class IndexEndpointTest {
 
         // THEN
         verify(repository, times(1)).get(eq(prefix));
-        verify(indexer, times(1)).index(any(Image.class));
+        verify(indexer, times(1)).index(any(S3Entry.class));
     }
 }

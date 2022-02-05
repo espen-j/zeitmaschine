@@ -3,6 +3,7 @@ package io.zeitmaschine.s3;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -13,7 +14,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import io.minio.BucketExistsArgs;
+import io.minio.CopyObjectArgs;
+import io.minio.CopySource;
 import io.minio.DeleteBucketNotificationArgs;
+import io.minio.Directive;
 import io.minio.GetBucketNotificationArgs;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
@@ -155,7 +159,16 @@ public class S3Repository {
             // mark the difference to io.zeitmaschine.s3.S3Repository.get(java.lang.String)
             // userMetaData and response are different in these two cases.
             String contentType = response.contentType();
-            return Mono.just(S3Entry.of(key, contentType, response.size(), getResourceSupplier(bucket, key)));
+            S3Entry entry = S3Entry.builder()
+                    .key(key) // or response.object() ?
+                    .size(response.size())
+                    .contentType(contentType)
+                    .resourceSupplier(getResourceSupplier(bucket, key))
+                    .build();
+            entry = Processor.from(entry)
+                    .process(response.userMetadata());
+
+            return Mono.just(entry);
 
         } catch (ErrorResponseException e) {
             switch (e.errorResponse().code()) {
@@ -164,9 +177,11 @@ public class S3Repository {
                 log.debug("No object found for '{}'.", key);
                 return Mono.empty();
             default:
+                // Mono.error ?
                 throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
             }
         } catch (Exception e) {
+            // Mono.error ?
             throw new RuntimeException(String.format("Failed to fetch object '%s' from S3.", key), e);
         }
     }
@@ -179,6 +194,24 @@ public class S3Repository {
                     .stream(resource.getInputStream(), resource.contentLength(), -1)
                     .contentType(contentType)
                     .build());
+        } catch (Exception e) {
+            throw new RuntimeException("Error while writing object '%s' to s3.".formatted(key), e);
+        }
+    }
+
+    public void metaData(String bucket, String key, Map<String, String> metaData) {
+        try {
+            CopyObjectArgs build = CopyObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(key)
+                    .source(CopySource.builder()
+                            .bucket(bucket)
+                            .object(key)
+                            .build())
+                    .metadataDirective(Directive.COPY)
+                    .userMetadata(metaData)
+                    .build();
+            minioClient.copyObject(build);
         } catch (Exception e) {
             throw new RuntimeException("Error while writing object '%s' to s3.".formatted(key), e);
         }
@@ -214,7 +247,16 @@ public class S3Repository {
             Item item = itemResult.get();
             String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
             String objectKey = item.objectName();
-            return Mono.just(S3Entry.of(objectKey, contentType, item.size(), getResourceSupplier(bucket, objectKey)));
+            Map<String, String> metaData = item.userMetadata();
+
+            S3Entry entry = S3Entry.builder()
+                    .key(objectKey)
+                    .contentType(contentType)
+                    .size(item.size())
+                    .resourceSupplier(getResourceSupplier(bucket, objectKey))
+                    .build();
+            entry = Processor.from(entry).process(metaData);
+            return Mono.just(entry);
         } catch (Exception e) {
             return Mono.error(e);
         }

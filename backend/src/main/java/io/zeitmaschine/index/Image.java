@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
 
+import io.zeitmaschine.s3.S3Entry;
+
 public class Image {
 
     private String name;
@@ -58,6 +60,15 @@ public class Image {
             return image;
         }
 
+        public Builder location(S3Entry.Location location) {
+            if (location != null) {
+                Location loc = new Location();
+                loc.lat = location.lat();
+                loc.lon = location.lon();
+                this.location = loc;
+            }
+            return this;
+        }
     }
 
     public static class Location {

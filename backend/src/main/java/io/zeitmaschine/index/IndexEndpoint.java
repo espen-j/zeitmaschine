@@ -15,12 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jayway.jsonpath.JsonPath;
 
-import io.zeitmaschine.s3.Processor;
 import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Index endpoint for s3 to notify and trigger a manual reindexing.
@@ -60,10 +58,7 @@ public class IndexEndpoint {
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key))
                 .filter(contentTypeFilter)
-                .flatMap(entry -> Processor.metaData(entry)
-                        .doOnError(ex -> LOG.error("Failed to process image.", ex))
-                        .onErrorResume(ex -> Mono.empty()))
-                .subscribe(image -> indexer.index(image));
+                .subscribe(entry -> indexer.index(entry));
         return ResponseEntity.ok().build();
     }
 
@@ -73,10 +68,7 @@ public class IndexEndpoint {
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
                 .filter(contentTypeFilter)
-                .flatMap(entry -> Processor.metaData(entry)
-                        .doOnError(ex -> LOG.error("Failed to process image.", ex))
-                        .onErrorResume(ex -> Mono.empty()))
-                .subscribe(image -> indexer.index(image));
+                .subscribe(entry -> indexer.index(entry));
 
         return ResponseEntity.ok().build();
     }

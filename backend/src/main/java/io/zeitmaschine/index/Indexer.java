@@ -18,6 +18,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 
+import io.zeitmaschine.s3.S3Entry;
+
 @Service
 public class Indexer {
 
@@ -63,14 +65,18 @@ public class Indexer {
 
     }
 
-    public void index(Image image) {
+    public void index(S3Entry entry) {
         try {
-            HttpEntity<Image> request = new HttpEntity<>(image);
+            Image payload = Image.from(entry.key())
+                    .createDate(entry.created())
+                    .location(entry.location())
+                    .build();
+            HttpEntity<Image> request = new HttpEntity<>(payload);
             URI uri = restTemplate.postForLocation(resourceUrl, request);
 
-            LOG.info("Image '{}' successfully indexed: {}", image.getName(), uri.toString());
+            LOG.info("Image '{}' successfully indexed: {}", entry.key(), uri.toString());
         } catch (RestClientException e) {
-            LOG.error("Failed to index image '{}'.", image.getName(), e);
+            LOG.error("Failed to index image '{}'.", entry.key(), e);
         }
     }
 

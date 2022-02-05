@@ -114,7 +114,12 @@ public class MinioIT {
         new Random().nextBytes(bytes);
         int elements = 50;
         Flux.range(0, elements)
-                .map(count -> S3Entry.of(String.valueOf(count), MediaType.APPLICATION_OCTET_STREAM_VALUE, bytes.length, () -> new ByteArrayResource(bytes)))
+                .map(count -> S3Entry.builder()
+                        .key(String.valueOf(count))
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                        .size(bytes.length)
+                        .resourceSupplier(() -> new ByteArrayResource(bytes))
+                        .build())
                 .log()
                 .subscribe(entry -> s3Repository.put(config.getBucket(), entry.key(), entry.resourceSupplier().get(), MediaType.APPLICATION_OCTET_STREAM_VALUE));
 
