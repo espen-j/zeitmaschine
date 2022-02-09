@@ -10,7 +10,7 @@ import org.springframework.core.io.ClassPathResource;
 
 public class TestImagesProvider implements ArgumentsProvider {
 
-    private static final String[] images = {"images/IMG_20161208_024708.jpg", "images/IMG_20180614_214734.jpg", "images/IMG_20181001_185137.jpg"};
+    private static final String[] images = {"images/IMG_20161208_024708.jpg", "images/IMG_20180614_214734.jpg", "images/IMG_20181001_185137.jpg", "images/PXL_20220202_160830986.MP.jpg"};
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) {

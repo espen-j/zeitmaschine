@@ -1,6 +1,6 @@
 package io.zeitmaschine.s3;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
@@ -130,6 +130,24 @@ public class MinioIT {
                 .verifyComplete();
 
         assertTrue(expected.isEmpty());
+
+    }
+
+    @Test
+    void metadata() {
+        // GIVEN
+        ClassPathResource image = new ClassPathResource("images/PXL_20220202_160830986.MP.jpg");
+        s3Repository.put(config.getBucket(), image.getFilename(), image, MediaType.IMAGE_JPEG_VALUE);
+
+        // WHEN - THEN
+        StepVerifier.create(s3Repository.get(config.getBucket(), image.getFilename()))
+                .assertNext(entry -> {
+                    assertNotNull(entry.location().lat());
+                    assertNotNull(entry.location().lon());
+                    assertNotNull(entry.created());
+                })
+                .verifyComplete();
+
 
     }
 }
