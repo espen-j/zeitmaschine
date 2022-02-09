@@ -1,6 +1,9 @@
 package io.zeitmaschine.s3;
 
+import static io.zeitmaschine.s3.Processor.*;
+
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +54,17 @@ public class S3Repository {
     private final Consumer<S3Entry> updateMetaData = s3Entry -> {
 
         // TODO: Move to processor, hide specifics
-        String lat = String.valueOf(s3Entry.location().lat());
-        String lon = String.valueOf(s3Entry.location().lon());
-        String creationDate = String.valueOf(s3Entry.created().getTime());
-        Map<String, String> metaData = Map.of("zm-creation-date", creationDate, "zm-location-lon", lon, "zm-location-lat", lat);
-
+        Map<String, String> metaData = new HashMap<>();
+        metaData.put(META_VERSION, "1");
+        if (s3Entry.location() != null) {
+            String lat = String.valueOf(s3Entry.location().lat());
+            String lon = String.valueOf(s3Entry.location().lon());
+            metaData.put(META_LOCATION_LON,  lon);
+            metaData.put(META_LOCATION_LAT,  lat);
+        }
+        if (s3Entry.created() != null) {
+            metaData.put(META_CREATION_DATE, String.valueOf(s3Entry.created().getTime()));
+        }
         metaData(s3Entry.key(), metaData);
     };
 
@@ -221,7 +230,7 @@ public class S3Repository {
                             .bucket(bucket)
                             .object(key)
                             .build())
-                    .metadataDirective(Directive.COPY)
+                    .metadataDirective(Directive.REPLACE)
                     .userMetadata(metaData)
                     .build();
             minioClient.copyObject(build);
