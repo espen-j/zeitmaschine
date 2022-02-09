@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -46,6 +47,17 @@ public class S3Repository {
     private final String bucket;
     private final String cacheBucket;
     private final boolean webhook;
+    private final Processor processor;
+    private final Consumer<S3Entry> updateMetaData = s3Entry -> {
+
+        // TODO: Move to processor, hide specifics
+        String lat = String.valueOf(s3Entry.location().lat());
+        String lon = String.valueOf(s3Entry.location().lon());
+        String creationDate = String.valueOf(s3Entry.created().getTime());
+        Map<String, String> metaData = Map.of("zm-creation-date", creationDate, "zm-location-lon", lon, "zm-location-lat", lat);
+
+        metaData(s3Entry.key(), metaData);
+    };
 
     private MinioClient minioClient;
 
@@ -68,6 +80,8 @@ public class S3Repository {
         this.minioClient = MinioClient.builder()
                 .endpoint(host)
                 .credentials(key, secret).build();
+
+        this.processor = new Processor(updateMetaData);
     }
 
     public boolean health() {
@@ -165,8 +179,7 @@ public class S3Repository {
                     .contentType(contentType)
                     .resourceSupplier(getResourceSupplier(bucket, key))
                     .build();
-            entry = Processor.from(entry)
-                    .process(response.userMetadata());
+            entry = processor.process(entry, response.userMetadata());
 
             return Mono.just(entry);
 
@@ -199,7 +212,7 @@ public class S3Repository {
         }
     }
 
-    public void metaData(String bucket, String key, Map<String, String> metaData) {
+    public void metaData(String key, Map<String, String> metaData) {
         try {
             CopyObjectArgs build = CopyObjectArgs.builder()
                     .bucket(bucket)
@@ -255,7 +268,7 @@ public class S3Repository {
                     .size(item.size())
                     .resourceSupplier(getResourceSupplier(bucket, objectKey))
                     .build();
-            entry = Processor.from(entry).process(metaData);
+            entry = processor.process(entry, metaData);
             return Mono.just(entry);
         } catch (Exception e) {
             return Mono.error(e);

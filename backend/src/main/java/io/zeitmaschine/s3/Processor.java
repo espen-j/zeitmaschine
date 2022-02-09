@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,35 +23,36 @@ import reactor.core.publisher.Sinks;
 public class Processor {
 
     private final static Logger log = LoggerFactory.getLogger(Processor.class.getName());
+    public static final String META_VERSION = "zm-meta-version";
+    public static final String META_LOCATION_LON = "zm-location-lon";
+    public static final String META_LOCATION_LAT = "zm-location-lat";
+    public static final String META_CREATION_DATE = "zm-creation-date";
 
-    private final Sinks.Many<S3Entry> publisher;
+    final Sinks.Many<S3Entry> publisher;
 
-    private S3Entry entry;
-
-    public Processor(S3Entry entry) {
-        this.entry = entry;
+    public Processor(Consumer<S3Entry> subscriber) {
         this.publisher = Sinks
                 .many()
                 .unicast()
                 .onBackpressureBuffer();
+
+        publisher.asFlux().subscribe(subscriber);
     }
 
-    public static Processor from(S3Entry entry) {
-        return new Processor(entry);
-    }
+    public S3Entry process(S3Entry processing, Map<String, String> metaData) {
+        String version = metaData.get("zm-meta-version");
+        S3Entry.Builder builder = S3Entry.Builder.from(processing);
 
-    public S3Entry process(Map<String, String> metaData) {
-        String version = metaData.get("zm-version");
-        S3Entry.Builder builder = S3Entry.Builder.from(entry);
+        S3Entry processed = processing;
 
         if (version != null && version.equals("1")) {
-            if (metaData.containsKey("zm-location-lon") && metaData.containsKey("zm-location-lat")) {
-                String lon = metaData.get("zm-location-lon");
-                String lat = metaData.get("zm-location-lat");
+            if (metaData.containsKey(META_LOCATION_LON) && metaData.containsKey(META_LOCATION_LAT)) {
+                String lon = metaData.get(META_LOCATION_LON);
+                String lat = metaData.get(META_LOCATION_LAT);
 
                 builder.location(Long.parseLong(lon), Long.parseLong(lat));
             }
-            Optional.ofNullable(metaData.get("zm-creation-date"))
+            Optional.ofNullable(metaData.get(META_CREATION_DATE))
                     .ifPresent(value -> {
                         try {
                             Date created = Date.from(Instant.ofEpochSecond(Long.parseLong(value)));
@@ -59,26 +61,26 @@ public class Processor {
                             log.error("Error parsing date from meta data.");
                         }
                     });
-            this.entry = builder.build();
+            processed = builder.build();
         } else {
             // exif extraction
-            try (InputStream inputStream = entry.resourceSupplier().get().getInputStream()) {
+            try (InputStream inputStream = processing.resourceSupplier().get().getInputStream()) {
                 Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
 
                 // Nullables
                 extractLocation(metadata).ifPresent(location -> builder.location(location.lon(), location.lat()));
                 extractCreationDate(metadata).ifPresent(date -> builder.created(date));
 
-                this.entry = builder.build();
+                processed = builder.build();
 
-                // TODO: update metadata
-                publisher.tryEmitNext(entry);
+                // update metadata
+                publisher.tryEmitNext(processed);
 
             } catch (IOException | ImageProcessingException e) {
                 log.error("Exif Metadata failed failed.", e);
             }
         }
-        return entry;
+        return processed;
     }
 
     private Optional<S3Entry.Location> extractLocation(Metadata metadata) {
