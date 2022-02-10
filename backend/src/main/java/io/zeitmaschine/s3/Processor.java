@@ -2,7 +2,6 @@ package io.zeitmaschine.s3;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +23,8 @@ import reactor.core.publisher.Sinks;
 public class Processor {
 
     private final static Logger log = LoggerFactory.getLogger(Processor.class.getName());
+
+    public static final String META_VERSION_CURRENT = "1";
     public static final String META_VERSION = "zm-meta-version";
     public static final String META_LOCATION_LON = "zm-location-lon";
     public static final String META_LOCATION_LAT = "zm-location-lat";
@@ -43,55 +44,36 @@ public class Processor {
     public S3Entry process(S3Entry processing) {
         Map<String, String> metaData = processing.metaData();
         String version = metaData.get(META_VERSION);
-        S3Entry.Builder builder = S3Entry.Builder.from(processing);
 
         S3Entry processed = processing;
 
-        Map<String, String> processedMetaData = new HashMap<>(metaData);
-
-        if (version != null && version.equals("1")) {
-            if (metaData.containsKey(META_LOCATION_LON) && metaData.containsKey(META_LOCATION_LAT)) {
-                String lon = metaData.get(META_LOCATION_LON);
-                String lat = metaData.get(META_LOCATION_LAT);
-
-                builder.location(Long.parseLong(lon), Long.parseLong(lat));
-            }
-            Optional.ofNullable(metaData.get(META_CREATION_DATE))
-                    .ifPresent(value -> {
-                        try {
-                            Date created = Date.from(Instant.ofEpochSecond(Long.parseLong(value)));
-                            builder.created(created);
-                        } catch (Exception e) {
-                            log.error("Error parsing date from meta data.");
-                        }
-                    });
-            processed = builder
-                    .metaData(processedMetaData)
-                    .build();
+        if (version != null && version.equals(META_VERSION_CURRENT)) {
+            log.debug("S3Entry already processed '{}', skipping..", processing.key());
         } else {
+
+            Map<String, String> processedMetaData = new HashMap<>(metaData);
             // exif extraction
             try (InputStream inputStream = processing.resourceSupplier().get().getInputStream()) {
                 Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
 
                 // Nullables
                 extractLocation(metadata).ifPresent(location -> {
-                    builder.location(location.lon(), location.lat());
                     processedMetaData.put(META_LOCATION_LON, String.valueOf(location.lon()));
                     processedMetaData.put(META_LOCATION_LAT, String.valueOf(location.lat()));
                 });
                 extractCreationDate(metadata).ifPresent(date -> {
-                    builder.created(date);
                     processedMetaData.put(META_CREATION_DATE, String.valueOf(date.getTime()));
                 });
 
                 processedMetaData.put(META_VERSION, "1");
-                processed = builder
+
+                // update metadata
+                processed = S3Entry.Builder.from(processing)
                         .metaData(processedMetaData)
                         .build();
 
-                // update metadata
+                // Update
                 publisher.tryEmitNext(processed);
-
             } catch (IOException | ImageProcessingException e) {
                 log.error("Exif Metadata failed failed.", e);
             }
@@ -106,7 +88,7 @@ public class Processor {
             if (loc != null) {
                 return Optional.of(new S3Entry.Location(loc.getLongitude(), loc.getLatitude()));
             }
-        };
+        }
         return Optional.empty();
     }
 

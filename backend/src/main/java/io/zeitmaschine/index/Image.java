@@ -1,8 +1,8 @@
 package io.zeitmaschine.index;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.zeitmaschine.s3.S3Entry;
 
@@ -37,14 +37,6 @@ public class Image {
 
         private Builder(String name) {
             this.name = name;
-        }
-
-        public Builder location(double latitude, double longitude) {
-            Location location = new Location();
-            location.lat = latitude;
-            location.lon = longitude;
-            this.location = location;
-            return this;
         }
 
         public Builder createDate(Date created) {

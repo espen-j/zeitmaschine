@@ -1,17 +1,40 @@
 package io.zeitmaschine.s3;
 
+import static io.zeitmaschine.s3.Processor.*;
+
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import org.springframework.core.io.Resource;
 
-public record S3Entry(String key, String contentType, long size, Supplier<Resource> resourceSupplier, Location location, Date created, Map<String, String> metaData) {
-
-    public record Location(double lon, double lat) {}
+public record S3Entry(String key, String contentType, long size, Supplier<Resource> resourceSupplier, Map<String, String> metaData) {
 
     public static Builder builder(){
         return new Builder();
+    }
+
+    public Date created() {
+        String date = metaData.get(META_CREATION_DATE);
+        if (date != null) {
+            try {
+                return Date.from(Instant.ofEpochSecond(Long.parseLong(date)));
+            } catch (Exception e) {
+                // ??
+                // log.error("Error parsing date from meta data.");
+            }
+        }
+        return null;
+    }
+
+    public Location location() {
+        String lon = metaData.get(META_LOCATION_LON);
+        String lat = metaData.get(META_LOCATION_LON);
+        if (lon != null && lat != null) {
+            return new Location(Double.parseDouble(lon), Double.parseDouble(lat));
+        }
+        return null;
     }
 
     public static class Builder {
@@ -19,8 +42,6 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
         private String contentType;
         private long size;
         private Supplier<Resource> resourceSupplier;
-        private Location location;
-        private Date created;
         private Map<String, String> metaData = Map.of();
 
         public Builder key(String key) {
@@ -55,26 +76,14 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
                     .contentType(entry.contentType())
                     // Does this work?!
                     .resourceSupplier(entry.resourceSupplier())
-                    .created(entry.created())
                     .metaData(entry.metaData());
-            if (entry.location() != null) {
-                builder.location(entry.location().lon(), entry.location().lat());
-            }
             return builder;
         }
 
-        public Builder created(Date created) {
-            this.created = created;
-            return this;
-        }
-
-        public Builder location(double lon, double lat) {
-            this.location = new Location(lon, lat);
-            return this;
-        }
-
         public S3Entry build() {
-            return new S3Entry(key, contentType, size, resourceSupplier, location, created, metaData);
+            return new S3Entry(key, contentType, size, resourceSupplier, metaData);
         }
     }
+
+    public record Location (double lon, double lat) {}
 }
