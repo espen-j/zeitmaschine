@@ -1,9 +1,6 @@
 package io.zeitmaschine.s3;
 
-import static io.zeitmaschine.s3.Processor.*;
-
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,22 +48,7 @@ public class S3Repository {
     private final String cacheBucket;
     private final boolean webhook;
     private final Processor processor;
-    private final Consumer<S3Entry> updateMetaData = s3Entry -> {
-
-        // TODO: Move to processor, hide specifics
-        Map<String, String> metaData = new HashMap<>();
-        metaData.put(META_VERSION, "1");
-        if (s3Entry.location() != null) {
-            String lat = String.valueOf(s3Entry.location().lat());
-            String lon = String.valueOf(s3Entry.location().lon());
-            metaData.put(META_LOCATION_LON,  lon);
-            metaData.put(META_LOCATION_LAT,  lat);
-        }
-        if (s3Entry.created() != null) {
-            metaData.put(META_CREATION_DATE, String.valueOf(s3Entry.created().getTime()));
-        }
-        metaData(s3Entry.key(), metaData);
-    };
+    private final Consumer<S3Entry> updateMetaData = s3Entry -> metaData(s3Entry.key(), s3Entry.metaData());
 
     private MinioClient minioClient;
 
@@ -187,8 +169,9 @@ public class S3Repository {
                     .size(response.size())
                     .contentType(contentType)
                     .resourceSupplier(getResourceSupplier(bucket, key))
+                    .metaData(response.userMetadata())
                     .build();
-            entry = processor.process(entry, response.userMetadata());
+            entry = processor.process(entry);
 
             return Mono.just(entry);
 
@@ -275,9 +258,10 @@ public class S3Repository {
                     .key(objectKey)
                     .contentType(contentType)
                     .size(item.size())
+                    .metaData(metaData)
                     .resourceSupplier(getResourceSupplier(bucket, objectKey))
                     .build();
-            entry = processor.process(entry, metaData);
+            entry = processor.process(entry);
             return Mono.just(entry);
         } catch (Exception e) {
             return Mono.error(e);

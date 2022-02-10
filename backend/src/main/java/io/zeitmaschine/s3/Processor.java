@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -39,11 +40,14 @@ public class Processor {
         publisher.asFlux().subscribe(subscriber);
     }
 
-    public S3Entry process(S3Entry processing, Map<String, String> metaData) {
-        String version = metaData.get("zm-meta-version");
+    public S3Entry process(S3Entry processing) {
+        Map<String, String> metaData = processing.metaData();
+        String version = metaData.get(META_VERSION);
         S3Entry.Builder builder = S3Entry.Builder.from(processing);
 
         S3Entry processed = processing;
+
+        Map<String, String> processedMetaData = new HashMap<>(metaData);
 
         if (version != null && version.equals("1")) {
             if (metaData.containsKey(META_LOCATION_LON) && metaData.containsKey(META_LOCATION_LAT)) {
@@ -61,17 +65,29 @@ public class Processor {
                             log.error("Error parsing date from meta data.");
                         }
                     });
-            processed = builder.build();
+            processed = builder
+                    .metaData(processedMetaData)
+                    .build();
         } else {
             // exif extraction
             try (InputStream inputStream = processing.resourceSupplier().get().getInputStream()) {
                 Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
 
                 // Nullables
-                extractLocation(metadata).ifPresent(location -> builder.location(location.lon(), location.lat()));
-                extractCreationDate(metadata).ifPresent(date -> builder.created(date));
+                extractLocation(metadata).ifPresent(location -> {
+                    builder.location(location.lon(), location.lat());
+                    processedMetaData.put(META_LOCATION_LON, String.valueOf(location.lon()));
+                    processedMetaData.put(META_LOCATION_LAT, String.valueOf(location.lat()));
+                });
+                extractCreationDate(metadata).ifPresent(date -> {
+                    builder.created(date);
+                    processedMetaData.put(META_CREATION_DATE, String.valueOf(date.getTime()));
+                });
 
-                processed = builder.build();
+                processedMetaData.put(META_VERSION, "1");
+                processed = builder
+                        .metaData(processedMetaData)
+                        .build();
 
                 // update metadata
                 publisher.tryEmitNext(processed);

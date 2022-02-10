@@ -32,10 +32,11 @@ class ProcessorTest {
                 .key("test")
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .size(1024)
+                .metaData(metaData)
                 .resourceSupplier(() -> image)
                 .build();
 
-        S3Entry processed = processor.process(entry, metaData);
+        S3Entry processed = processor.process(entry);
 
         assertThat(processed.created(), notNullValue());
         assertThat(processed.location(), nullValue());
@@ -55,10 +56,11 @@ class ProcessorTest {
                 .key("test")
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .size(1024)
+                .metaData(metaData)
                 .resourceSupplier(() -> image)
                 .build();
 
-        S3Entry processed = processor.process(entry, metaData);
+        S3Entry processed = processor.process(entry);
 
         assertThat(processed.created(), notNullValue());
         assertThat(processed.location(), notNullValue());
@@ -80,12 +82,13 @@ class ProcessorTest {
                 .key("test")
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .size(1024)
+                .metaData(metaData)
                 .resourceSupplier(() -> {
                     throw new RuntimeException("Should not fetch binary for exif data!");
                 })
                 .build();
 
-        S3Entry processed = processor.process(entry, metaData);
+        S3Entry processed = processor.process(entry);
 
         assertThat(processed.created(), greaterThanOrEqualTo(Date.from(Instant.now().minusSeconds(TimeUnit.MINUTES.toSeconds(1)))));
         assertThat(processed.location(), notNullValue());
@@ -106,10 +109,11 @@ class ProcessorTest {
                 .key("test")
                 .contentType(MediaType.IMAGE_JPEG_VALUE)
                 .size(1024)
+                .metaData(metaData)
                 .resourceSupplier(() -> image)
                 .build();
 
-        S3Entry processed = processor.process(entry, metaData);
+        S3Entry processed = processor.process(entry);
 
         assertThat(processed.created(), notNullValue());
         assertThat(processed.location(), notNullValue());

@@ -1,11 +1,12 @@
 package io.zeitmaschine.s3;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import org.springframework.core.io.Resource;
 
-public record S3Entry(String key, String contentType, long size, Supplier<Resource> resourceSupplier, Location location, Date created) {
+public record S3Entry(String key, String contentType, long size, Supplier<Resource> resourceSupplier, Location location, Date created, Map<String, String> metaData) {
 
     public record Location(double lon, double lat) {}
 
@@ -20,6 +21,7 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
         private Supplier<Resource> resourceSupplier;
         private Location location;
         private Date created;
+        private Map<String, String> metaData = Map.of();
 
         public Builder key(String key) {
             this.key = key;
@@ -41,14 +43,20 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
             return this;
         }
 
+        public Builder metaData(Map<String, String> metaData) {
+            this.metaData = metaData;
+            return this;
+        }
+
         public static Builder from(S3Entry entry) {
             Builder builder = builder()
-                    .key(entry.key)
+                    .key(entry.key())
                     .size(entry.size())
                     .contentType(entry.contentType())
                     // Does this work?!
                     .resourceSupplier(entry.resourceSupplier())
-                    .created(entry.created());
+                    .created(entry.created())
+                    .metaData(entry.metaData());
             if (entry.location() != null) {
                 builder.location(entry.location().lon(), entry.location().lat());
             }
@@ -66,7 +74,7 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
         }
 
         public S3Entry build() {
-            return new S3Entry(key, contentType, size, resourceSupplier, location, created);
+            return new S3Entry(key, contentType, size, resourceSupplier, location, created, metaData);
         }
     }
 }
