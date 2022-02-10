@@ -1,7 +1,9 @@
 package io.zeitmaschine.s3;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -24,7 +28,9 @@ import org.testcontainers.utility.DockerImageName;
 
 import io.zeitmaschine.TestImagesProvider;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.retry.Retry;
 
 @Testcontainers
 public class MinioIT {
@@ -62,6 +68,17 @@ public class MinioIT {
         s3Repository = new S3Repository(config);
 
         s3Repository.initBucket();
+
+        BucketHealthIndicator healthIndicator = new BucketHealthIndicator(s3Repository);
+
+        Mono<Health> bucketsReady = Mono.defer(() -> healthIndicator.health());
+
+        bucketsReady
+                // healthIndicators return a Health object, we need error for retry
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Bucket not ready")))
+                .retryWhen(Retry.fixedDelay(5, Duration.of(3, SECONDS)))
+                .doOnSuccess(health -> System.out.println("DONE"))
+                .subscribe();
     }
 
     @ParameterizedTest
@@ -147,8 +164,6 @@ public class MinioIT {
                     assertNotNull(entry.created());
                 })
                 .verifyComplete();
-
-
     }
 }
 

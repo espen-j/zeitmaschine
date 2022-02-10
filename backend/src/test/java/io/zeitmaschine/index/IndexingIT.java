@@ -1,8 +1,11 @@
 package io.zeitmaschine.index;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.Map;
 
 import org.json.JSONException;
@@ -10,6 +13,8 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -31,7 +36,10 @@ import org.testcontainers.utility.DockerImageName;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
+import io.zeitmaschine.s3.BucketHealthIndicator;
 import io.zeitmaschine.s3.S3Config;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ContextConfiguration(initializers = { IndexingIT.Initializer.class })
@@ -46,6 +54,9 @@ public class IndexingIT {
 
     @Autowired
     private S3Config config;
+
+    @Autowired
+    private BucketHealthIndicator healthIndicator;
 
     private static MinioClient minioClient;
     private String bucket;
@@ -109,6 +120,14 @@ public class IndexingIT {
 
         this.bucket = config.getBucket();
 
+        Mono<Health> bucketsReady = Mono.defer(() -> healthIndicator.health());
+
+        bucketsReady
+                // healthIndicators return a Health object, we need error for retry
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Bucket not ready")))
+                .retryWhen(Retry.fixedDelay(5, Duration.of(3, SECONDS)))
+                .doOnSuccess(health -> System.out.println("DONE"))
+                .subscribe();
     }
 
     /**
