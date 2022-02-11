@@ -65,7 +65,7 @@ public class MinioIT {
         config.setWebhook(false);
         config.setHost("http://" + minioContainer.getHost() + ":" + minioContainer.getMappedPort(MINIO_PORT));
 
-        s3Repository = new S3Repository(config);
+        s3Repository = new MinioRepository(config);
 
         // TODO: Make this an integration test using @SpringBootTest, then all this comes for free:
         MinioHealthIndicator minoHealthIndicator = new MinioHealthIndicator(config);
