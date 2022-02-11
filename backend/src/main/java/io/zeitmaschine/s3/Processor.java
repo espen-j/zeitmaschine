@@ -68,7 +68,7 @@ public class Processor {
                     processedMetaData.put(META_CREATION_DATE, String.valueOf(date.getTime()));
                 });
 
-                processedMetaData.put(META_VERSION, "1");
+                processedMetaData.put(META_VERSION, META_VERSION_CURRENT);
 
                 // update metadata
                 processed = S3Entry.Builder.from(processing)
@@ -78,7 +78,7 @@ public class Processor {
                 // Update
                 publisher.tryEmitNext(processed);
             } catch (IOException | ImageProcessingException e) {
-                log.error("Exif Metadata failed failed.", e);
+                log.error("Failed to read metadata from file '{}'.", processing.key(), e);
             }
         }
         return processed;

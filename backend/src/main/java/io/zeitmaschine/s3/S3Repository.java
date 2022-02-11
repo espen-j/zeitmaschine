@@ -171,7 +171,11 @@ public class S3Repository {
                     .resourceSupplier(getResourceSupplier(bucket, key))
                     .metaData(response.userMetadata())
                     .build();
-            entry = processor.process(entry);
+
+            // Only process originals
+            if (!bucket.equals(this.bucket)) {
+                entry = processor.process(entry);
+            }
 
             return Mono.just(entry);
 
@@ -218,7 +222,7 @@ public class S3Repository {
                     .build();
             minioClient.copyObject(build);
         } catch (Exception e) {
-            throw new RuntimeException("Error while writing object '%s' to s3.".formatted(key), e);
+            throw new RuntimeException("Error while writing metadata for object '%s' to s3.".formatted(key), e);
         }
     }
 
@@ -261,7 +265,10 @@ public class S3Repository {
                     .metaData(metaData)
                     .resourceSupplier(getResourceSupplier(bucket, objectKey))
                     .build();
+
+            // TODO: Only process originals
             entry = processor.process(entry);
+
             return Mono.just(entry);
         } catch (Exception e) {
             return Mono.error(e);
