@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -47,8 +46,6 @@ public class MinioRepository implements S3Repository {
     private final String bucket;
     private final String cacheBucket;
     private final boolean webhook;
-    private final Processor processor;
-    private final Consumer<S3Entry> updateMetaData = s3Entry -> metaData(s3Entry.key(), s3Entry.metaData());
 
     private MinioClient minioClient;
 
@@ -71,8 +68,6 @@ public class MinioRepository implements S3Repository {
         this.minioClient = MinioClient.builder()
                 .endpoint(host)
                 .credentials(key, secret).build();
-
-        this.processor = new Processor(updateMetaData);
     }
 
     @Override
@@ -175,11 +170,6 @@ public class MinioRepository implements S3Repository {
                     .metaData(response.userMetadata())
                     .build();
 
-            // Only process originals
-            if (bucket.equals(this.bucket)) {
-                entry = processor.process(entry);
-            }
-
             return Mono.just(entry);
 
         } catch (ErrorResponseException e) {
@@ -271,9 +261,6 @@ public class MinioRepository implements S3Repository {
                     .metaData(metaData)
                     .resourceSupplier(getResourceSupplier(bucket, objectKey))
                     .build();
-
-            // TODO: Only process originals
-            entry = processor.process(entry);
 
             return Mono.just(entry);
         } catch (Exception e) {

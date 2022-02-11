@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jayway.jsonpath.JsonPath;
 
+import io.zeitmaschine.s3.MetaDataProcessingRepository;
 import io.zeitmaschine.s3.S3Config;
 import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
@@ -44,7 +45,7 @@ public class IndexEndpoint {
 
     @Autowired
     public IndexEndpoint(S3Repository repository, S3Config config, Indexer indexer) {
-        this.repository = repository;
+        this.repository = MetaDataProcessingRepository.wrap(repository);
         this.indexer = indexer;
         this.bucket = config.getBucket();
     }

@@ -165,10 +165,12 @@ public class MinioIT {
     void metadata() {
         // GIVEN
         ClassPathResource image = new ClassPathResource("images/PXL_20220202_160830986.MP.jpg");
-        s3Repository.put(config.getBucket(), image.getFilename(), image, MediaType.IMAGE_JPEG_VALUE);
+
+        S3Repository wrapped = MetaDataProcessingRepository.wrap(s3Repository);
+        wrapped.put(config.getBucket(), image.getFilename(), image, MediaType.IMAGE_JPEG_VALUE);
 
         // WHEN - THEN
-        StepVerifier.create(s3Repository.get(config.getBucket(), image.getFilename()))
+        StepVerifier.create(wrapped.get(config.getBucket(), image.getFilename()))
                 .assertNext(entry -> {
                     assertNotNull(entry.location().lat());
                     assertNotNull(entry.location().lon());
