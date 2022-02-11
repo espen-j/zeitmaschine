@@ -67,17 +67,28 @@ public class MinioIT {
 
         s3Repository = new S3Repository(config);
 
-        s3Repository.initBucket();
+        // TODO: Make this an integration test using @SpringBootTest, then all this comes for free:
+        MinioHealthIndicator minoHealthIndicator = new MinioHealthIndicator(config);
+        Mono<Health> minioReady = Mono.defer(() -> minoHealthIndicator.health());
+        minioReady
+                // healthIndicators return a Health object, we need error for retry
+                .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Bucket not ready")))
+                .retryWhen(Retry.fixedDelay(5, Duration.of(3, SECONDS)))
+                .doOnSuccess(health -> {
+                    System.out.println("Minio ready.");
+                    s3Repository.initBucket(); // This one is important!
+                })
+                .doOnError(throwable -> System.out.println("Minio not ready. Exiting"))
+                .subscribe();
 
-        BucketHealthIndicator healthIndicator = new BucketHealthIndicator(s3Repository);
-
-        Mono<Health> bucketsReady = Mono.defer(() -> healthIndicator.health());
-
+        BucketHealthIndicator bucketHealthIndicator = new BucketHealthIndicator(s3Repository);
+        Mono<Health> bucketsReady = Mono.defer(() -> bucketHealthIndicator.health());
         bucketsReady
                 // healthIndicators return a Health object, we need error for retry
                 .flatMap(health -> Status.UP.equals(health.getStatus()) ? Mono.just(health) : Mono.error(new RuntimeException("Bucket not ready")))
                 .retryWhen(Retry.fixedDelay(5, Duration.of(3, SECONDS)))
-                .doOnSuccess(health -> System.out.println("DONE"))
+                .doOnSuccess(health -> System.out.println("Buckets ready."))
+                .doOnError(throwable -> System.out.println("Buckets not ready. Exiting"))
                 .subscribe();
     }
 

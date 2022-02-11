@@ -19,6 +19,7 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 public class Processor {
 
@@ -38,7 +39,9 @@ public class Processor {
                 .unicast()
                 .onBackpressureBuffer();
 
-        publisher.asFlux().subscribe(subscriber);
+        publisher.asFlux()
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe(subscriber);
     }
 
     public S3Entry process(S3Entry processing) {
