@@ -1,16 +1,33 @@
 package io.zeitmaschine.s3;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 
+import io.zeitmaschine.index.IndexEndpoint;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class MetaDataProcessingRepository implements S3Repository {
 
+    private final static Logger LOG = LoggerFactory.getLogger(IndexEndpoint.class.getName());
+
+    private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> {
+        String contentType = s3Entry.contentType();
+        boolean isJpeg = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
+        if (!isJpeg) {
+            LOG.info("Filtering '{}' with content-type '{}'.", s3Entry.key(), contentType);
+        }
+        return isJpeg;
+    };
+
     private S3Repository s3Repository;
     private Processor processor;
+
 
     MetaDataProcessingRepository(S3Repository s3Repository) {
         this.s3Repository = s3Repository;
@@ -30,6 +47,7 @@ public class MetaDataProcessingRepository implements S3Repository {
     @Override
     public Mono<S3Entry> get(String bucket, String key) {
         return s3Repository.get(bucket, key)
+                .filter(contentTypeFilter)
                 .map(s3Entry -> processor.process(s3Entry));
     }
 
@@ -46,6 +64,7 @@ public class MetaDataProcessingRepository implements S3Repository {
     @Override
     public Flux<S3Entry> get(String prefix) {
         return s3Repository.get(prefix)
+                .filter(contentTypeFilter)
                 .map(s3Entry -> processor.process(s3Entry));
     }
 

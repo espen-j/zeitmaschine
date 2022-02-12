@@ -1,12 +1,10 @@
 package io.zeitmaschine.index;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +15,6 @@ import com.jayway.jsonpath.JsonPath;
 
 import io.zeitmaschine.s3.MetaDataProcessingRepository;
 import io.zeitmaschine.s3.S3Config;
-import io.zeitmaschine.s3.S3Entry;
 import io.zeitmaschine.s3.S3Repository;
 import reactor.core.publisher.Flux;
 
@@ -34,15 +31,6 @@ public class IndexEndpoint {
     private final Indexer indexer;
     private final String bucket;
 
-    private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> {
-        String contentType = s3Entry.contentType();
-        boolean isJpeg = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
-        if (!isJpeg) {
-            LOG.info("Filtering '{}' with content-type '{}'.", s3Entry.key(), contentType);
-        }
-        return isJpeg;
-    };
-
     @Autowired
     public IndexEndpoint(S3Repository repository, S3Config config, Indexer indexer) {
         this.repository = MetaDataProcessingRepository.wrap(repository);
@@ -58,7 +46,6 @@ public class IndexEndpoint {
 
         Flux.fromIterable(keys)
                 .flatMap(key -> repository.get(bucket, key))
-                .filter(contentTypeFilter)
                 .subscribe(entry -> indexer.index(entry));
         return ResponseEntity.ok().build();
     }
@@ -68,7 +55,6 @@ public class IndexEndpoint {
         String prefix = JsonPath.read(json, "$.prefix");
         LOG.info("Indexing objects with prefix '{}'.", prefix);
         repository.get(prefix)
-                .filter(contentTypeFilter)
                 .subscribe(entry -> indexer.index(entry));
 
         return ResponseEntity.ok().build();
