@@ -16,7 +16,7 @@ public interface S3Repository {
 
     void put(String bucket, String key, Resource resource, String contentType);
 
-    void metaData(String key, Map<String, String> metaData);
+    void metaData(String key, Map<String, String> metaData, String contentType);
 
     Flux<S3Entry> get(String prefix);
 }

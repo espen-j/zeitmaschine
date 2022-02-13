@@ -18,11 +18,11 @@ public class MetaDataProcessingRepository implements S3Repository {
 
     private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> {
         String contentType = s3Entry.contentType();
-        boolean isJpeg = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
-        if (!isJpeg) {
+        boolean contentTypeMatch = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
+        if (!contentTypeMatch) {
             LOG.info("Filtering '{}' with content-type '{}'.", s3Entry.key(), contentType);
         }
-        return isJpeg;
+        return contentTypeMatch;
     };
 
     private S3Repository s3Repository;
@@ -31,7 +31,7 @@ public class MetaDataProcessingRepository implements S3Repository {
 
     MetaDataProcessingRepository(S3Repository s3Repository) {
         this.s3Repository = s3Repository;
-        this.processor = new Processor(s3Entry -> metaData(s3Entry.key(), s3Entry.metaData()));
+        this.processor = new Processor(s3Entry -> metaData(s3Entry.key(), s3Entry.metaData(), s3Entry.contentType()));
     }
 
     @Override
@@ -57,8 +57,8 @@ public class MetaDataProcessingRepository implements S3Repository {
     }
 
     @Override
-    public void metaData(String key, Map<String, String> metaData) {
-        s3Repository.metaData(key, metaData);
+    public void metaData(String key, Map<String, String> metaData, String contentType) {
+        s3Repository.metaData(key, metaData, contentType);
     }
 
     @Override

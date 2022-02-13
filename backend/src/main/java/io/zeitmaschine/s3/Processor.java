@@ -1,7 +1,7 @@
 package io.zeitmaschine.s3;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +10,10 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 
+import com.drew.imaging.FileType;
+import com.drew.imaging.FileTypeDetector;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
@@ -53,10 +56,25 @@ public class Processor {
         if (version != null && version.equals(META_VERSION_CURRENT)) {
             log.debug("S3Entry already processed '{}', skipping..", processing.key());
         } else {
-
             Map<String, String> processedMetaData = new HashMap<>(metaData);
+
+            String contentType = processing.contentType();
             // exif extraction
-            try (InputStream inputStream = processing.resourceSupplier().get().getInputStream()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(processing.resourceSupplier().get().getInputStream())) {
+                // BufferedInputStream needed for FileTypeDetector#detectFileType
+                if (contentType.equals(MediaType.APPLICATION_OCTET_STREAM_VALUE) || contentType.equals(MinioRepository.UNKNOWN_CONTENT_TYPE)) {
+                    // contentType extraction
+                    FileType fileType = FileTypeDetector.detectFileType(inputStream);
+
+                    // Allows re-reading the inputstream - hmm..
+                    inputStream.reset();
+                    if (fileType == FileType.Jpeg) {
+                        contentType = MediaType.IMAGE_JPEG_VALUE;
+                    } else if (fileType == FileType.Mp4) {
+                        // TODO "video/mp4" - but needs frontend filtering
+                    }
+                }
+
                 Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
 
                 // Nullables
@@ -72,6 +90,7 @@ public class Processor {
 
                 // update metadata
                 processed = S3Entry.Builder.from(processing)
+                        .contentType(contentType)
                         .metaData(processedMetaData)
                         .build();
 

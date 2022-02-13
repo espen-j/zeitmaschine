@@ -119,4 +119,30 @@ class ProcessorTest {
         assertThat(processed.location(), notNullValue());
         assertTrue(recorded.get(0).key().equals("test"));
     }
+
+    @Test
+    void contentType() {
+        // GIVEN
+
+        Map metaData = Map.of();
+
+        List<S3Entry> recorded = Lists.newArrayList();
+        Processor processor = new Processor(s3Entry -> recorded.add(s3Entry));
+
+        // Image with created date AND location in Exif data
+        ClassPathResource image = new ClassPathResource("images/PXL_20220202_160830986.MP.jpg");
+        S3Entry entry = S3Entry.builder()
+                .key("test")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .size(1024)
+                .metaData(metaData)
+                .resourceSupplier(() -> image)
+                .build();
+
+        S3Entry processed = processor.process(entry);
+
+        assertThat(processed.created(), notNullValue());
+        assertThat(processed.location(), notNullValue());
+        assertTrue(processed.contentType().equals(MediaType.IMAGE_JPEG_VALUE));
+    }
 }

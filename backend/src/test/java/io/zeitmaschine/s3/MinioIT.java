@@ -1,6 +1,8 @@
 package io.zeitmaschine.s3;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
@@ -175,7 +177,29 @@ public class MinioIT {
                     assertNotNull(entry.location().lat());
                     assertNotNull(entry.location().lon());
                     assertNotNull(entry.created());
+                    assertThat(entry.contentType(), is(MediaType.IMAGE_JPEG_VALUE));
                 })
+                .verifyComplete();
+    }
+
+    @Test
+    void processedContentTypePersisted() {
+        // GIVEN
+        ClassPathResource image = new ClassPathResource("images/PXL_20220202_160830986.MP.jpg");
+
+        // Set incorrect content type
+        s3Repository.put(config.getBucket(), image.getFilename(), image, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+
+        StepVerifier.create(s3Repository.get(config.getBucket(), image.getFilename()))
+                .assertNext(entry -> assertThat(entry.contentType(), is(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
+                .verifyComplete();
+
+        // WHEN - Set correct content type
+        s3Repository.metaData(image.getFilename(), Map.of(), MediaType.IMAGE_JPEG_VALUE);
+
+        // THEN
+        StepVerifier.create(s3Repository.get(config.getBucket(), image.getFilename()))
+                .assertNext(entry -> assertThat(entry.contentType(), is(MediaType.IMAGE_JPEG_VALUE)))
                 .verifyComplete();
     }
 }

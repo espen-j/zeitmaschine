@@ -203,7 +203,7 @@ public class MinioRepository implements S3Repository {
     }
 
     @Override
-    public void metaData(String key, Map<String, String> metaData) {
+    public void metaData(String key, Map<String, String> metaData, String contentType) {
         try {
             CopyObjectArgs build = CopyObjectArgs.builder()
                     .bucket(bucket)
@@ -212,6 +212,7 @@ public class MinioRepository implements S3Repository {
                             .bucket(bucket)
                             .object(key)
                             .build())
+                    .headers(Map.of("Content-Type", contentType))
                     .metadataDirective(Directive.REPLACE)
                     .userMetadata(metaData)
                     .build();
