@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +32,8 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -148,10 +150,12 @@ public class IndexingIT {
         // index might not have been initialized, wait a bit..
         Thread.sleep(5000);
 
-        String jsonString = new JSONObject()
-                .put("from", 0)
-                .put("size", "3")
-                .toString();
+        Map<String, Object> payload = Map.of(
+                "from", 0,
+                "size", 3,
+                "sort", List.of(Map.of("created", Map.of("order" ,"desc"))));
+
+        String jsonString = new ObjectMapper().writeValueAsString(payload);
 
         webTestClient.post()
                 .uri(uriBuilder -> uriBuilder
