@@ -176,6 +176,88 @@ public class IndexingIT {
 
     }
 
+    @Test
+    @WithMockUser
+    void reindex() throws IOException, MinioException, NoSuchAlgorithmException, InvalidKeyException, JSONException, InterruptedException {
+        Resource image = new ClassPathResource("images/IMG_20181001_185137.jpg");
+        minioClient.putObject(PutObjectArgs.builder()
+                .bucket(bucket)
+                .object(TEST_IMAGE_NAME)
+                .stream(image.getInputStream(), image.contentLength(), -1)
+                .contentType(MediaType.IMAGE_JPEG_VALUE)
+                .build());
+
+        // index might not have been initialized, wait a bit..
+        Thread.sleep(5000);
+
+        Map<String, Object> payload = Map.of(
+                "from", 0,
+                "size", 3,
+                "sort", List.of(Map.of("created", Map.of("order" ,"desc"))));
+
+        String jsonString = new ObjectMapper().writeValueAsString(payload);
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/zeitmaschine/image/_search")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(jsonString))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE) // elastic returns deprecated content type still
+                .expectBody()
+                .jsonPath("$.hits.hits").isArray()
+                .jsonPath("$.hits.hits[0]._source.name").isEqualTo("IMG_20181001_185137.jpg");
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/index/wipe")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/index/init")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/index/prefix")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue("{\"prefix\":\"\"}"))
+                .exchange()
+                .expectStatus().isOk();
+
+        // index might not have been initialized, wait a bit..
+        Thread.sleep(5000);
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/zeitmaschine/image/_search")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(jsonString))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE) // elastic returns deprecated content type still
+                .expectBody()
+                .jsonPath("$.hits.hits").isArray()
+                .jsonPath("$.hits.hits[0]._source.name").isEqualTo("IMG_20181001_185137.jpg");
+
+    }
+
 
     // https://www.baeldung.com/spring-boot-testcontainers-integration-test
     static class Initializer
