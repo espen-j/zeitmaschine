@@ -18,11 +18,14 @@ public class MetaDataProcessingRepository implements S3Repository {
 
     private final static Predicate<S3Entry> contentTypeFilter = s3Entry -> {
         String contentType = s3Entry.contentType();
-        boolean contentTypeMatch = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
-        if (!contentTypeMatch) {
+        boolean contentTypeMatch = contentType.equals(MediaType.IMAGE_JPEG_VALUE); // TODO mp4
+
+        // If it's octet stream, but the file extension is jpeg|jpg
+        boolean extensionMatch = contentType.equals(MediaType.APPLICATION_OCTET_STREAM_VALUE) && (s3Entry.key().toLowerCase().endsWith("jpg") || s3Entry.key().toLowerCase().endsWith("jpeg"));
+        if (!contentTypeMatch && !extensionMatch) {
             LOG.info("Filtering '{}' with content-type '{}'.", s3Entry.key(), contentType);
         }
-        return contentTypeMatch;
+        return contentTypeMatch || extensionMatch;
     };
 
     private S3Repository s3Repository;
