@@ -31,10 +31,15 @@ public class MetaDataProcessingRepository implements S3Repository {
     private S3Repository s3Repository;
     private Processor processor;
 
-
     MetaDataProcessingRepository(S3Repository s3Repository) {
         this.s3Repository = s3Repository;
         this.processor = new Processor(s3Entry -> metaData(s3Entry.key(), s3Entry.metaData(), s3Entry.contentType()));
+    }
+
+    // Used for test, not so nice, refactor Consumer creation?
+    MetaDataProcessingRepository(S3Repository s3Repository, Processor processor) {
+        this.s3Repository = s3Repository;
+        this.processor = processor;
     }
 
     @Override
