@@ -30,7 +30,7 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
 
     public Location location() {
         String lon = metaData.get(META_LOCATION_LON);
-        String lat = metaData.get(META_LOCATION_LON);
+        String lat = metaData.get(META_LOCATION_LAT);
         if (lon != null && lat != null) {
             return new Location(Double.parseDouble(lon), Double.parseDouble(lat));
         }
