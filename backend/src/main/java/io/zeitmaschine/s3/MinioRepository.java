@@ -206,6 +206,8 @@ public class MinioRepository implements S3Repository {
     @Override
     public void metaData(String key, Map<String, String> metaData, String contentType) {
         try {
+            Map<String, String> headers = contentType != null ? Map.of("Content-Type", contentType) : Map.of();
+
             CopyObjectArgs build = CopyObjectArgs.builder()
                     .bucket(bucket)
                     .object(key)
@@ -213,13 +215,13 @@ public class MinioRepository implements S3Repository {
                             .bucket(bucket)
                             .object(key)
                             .build())
-                    .headers(Map.of("Content-Type", contentType))
+                    .headers(headers)
                     .metadataDirective(Directive.REPLACE)
                     .userMetadata(metaData)
                     .build();
             minioClient.copyObject(build);
         } catch (Exception e) {
-            throw new RuntimeException("Error while writing metadata for object '%s' to s3.".formatted(key), e);
+            log.error("Error while writing metadata for object '%s' to s3.".formatted(key), e);
         }
     }
 
