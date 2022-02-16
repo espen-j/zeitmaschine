@@ -19,7 +19,7 @@ public record S3Entry(String key, String contentType, long size, Supplier<Resour
         String date = metaData.get(META_CREATION_DATE);
         if (date != null) {
             try {
-                return Date.from(Instant.ofEpochSecond(Long.parseLong(date)));
+                return Date.from(Instant.ofEpochMilli(Long.parseLong(date)));
             } catch (Exception e) {
                 // ??
                 // log.error("Error parsing date from meta data.");

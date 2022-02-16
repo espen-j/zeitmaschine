@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
@@ -69,9 +68,10 @@ class ProcessorTest {
     @Test
     void allFromMetaData() {
         // GIVEN
+        Date now = Date.from(Instant.now());
         Map<String, String> metaData = Map.of(
                 META_VERSION, String.valueOf(1),
-                META_CREATION_DATE, String.valueOf(Date.from(Instant.now()).getTime()),
+                META_CREATION_DATE, String.valueOf(now.getTime()),
                 META_LOCATION_LON, "123",
                 META_LOCATION_LAT, "321"
         );
@@ -90,7 +90,7 @@ class ProcessorTest {
 
         S3Entry processed = processor.process(entry);
 
-        assertThat(processed.created(), greaterThanOrEqualTo(Date.from(Instant.now().minusSeconds(TimeUnit.MINUTES.toSeconds(1)))));
+        assertTrue(now.equals(processed.created()));
         assertThat(processed.location(), notNullValue());
     }
 
