@@ -53,7 +53,7 @@ public class Processor {
 
         S3Entry processed = processing;
 
-        if (version != null && version.equals(META_VERSION_CURRENT)) {
+        if (version != null) {
             log.debug("S3Entry already processed '{}', skipping..", processing.key());
         } else {
             Map<String, String> processedMetaData = new HashMap<>(metaData);
