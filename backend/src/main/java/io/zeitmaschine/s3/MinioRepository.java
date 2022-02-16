@@ -1,6 +1,7 @@
 package io.zeitmaschine.s3;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -253,7 +254,13 @@ public class MinioRepository implements S3Repository {
             Item item = itemResult.get();
             String contentType = item.userMetadata().getOrDefault("content-type", UNKNOWN_CONTENT_TYPE);
             String objectKey = item.objectName();
-            Map<String, String> metaData = item.userMetadata();
+            Map<String, String> metaData = new HashMap<>();
+
+            // What a mess, works as expected for #get(bucket, key), minioClient#listObjects is "problematic"
+            metaData.putIfAbsent(Processor.META_VERSION, item.userMetadata().get("X-Amz-Meta-Zm-Meta-Version"));
+            metaData.putIfAbsent(Processor.META_CREATION_DATE, item.userMetadata().get("X-Amz-Meta-Zm-Creation-Date"));
+            metaData.putIfAbsent(Processor.META_LOCATION_LON, item.userMetadata().get("X-Amz-Meta-Zm-Location-Lon"));
+            metaData.putIfAbsent(Processor.META_LOCATION_LAT, item.userMetadata().get("X-Amz-Meta-Zm-Location-Lat"));
 
             S3Entry entry = S3Entry.builder()
                     .key(objectKey)

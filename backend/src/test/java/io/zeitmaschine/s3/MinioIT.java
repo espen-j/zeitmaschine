@@ -69,7 +69,7 @@ public class MinioIT {
 
         s3Repository = new MinioRepository(config);
 
-        // TODO: Make this an integration test using @SpringBootTest, then all this comes for free:
+        // TODO: Write helper methods, see MetaDataMigratortest as well
         MinioHealthIndicator minoHealthIndicator = new MinioHealthIndicator(config);
         Mono<Health> minioReady = Mono.defer(() -> minoHealthIndicator.health());
         minioReady
