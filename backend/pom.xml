@@ -18,7 +18,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <metadata-extractor.version>2.11.0</metadata-extractor.version>
+    <metadata-extractor.version>2.18.0</metadata-extractor.version>
     <testcontainers.version>1.16.2</testcontainers.version>
   </properties>
 
